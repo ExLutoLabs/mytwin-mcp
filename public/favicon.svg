@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Luto mark, smaller variant. Face is 20x20 inside a 32x32 viewport
+       (62.5% fill) with a 2px ink shadow at +2,+2. Centered around (16,16). -->
+  <!-- Shadow: 32% opacity ink -->
+  <rect x="7" y="7" width="20" height="20" rx="3" fill="#0F0E0D" opacity="0.32"/>
+  <!-- Face: yellow with ink border -->
+  <rect x="5" y="5" width="20" height="20" rx="3" fill="#FFE34A" stroke="#0F0E0D" stroke-width="1.5"/>
+</svg>

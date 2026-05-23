@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyAITwin — by invitation</title>
+<meta name="description" content="MyAITwin gives Claude permanent memory of everything you know. One of the first 50 invites.">
+<meta name="robots" content="noindex,nofollow">
+<meta property="og:title" content="MyAITwin — by invitation">
+<meta property="og:description" content="You're one of the first 50. Set up your AI Twin in under a minute.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://myaitwin.lutolearn.com">
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --paper:       #FDFCFA;
+  --surface:     #F9F8F4;
+  --line:        #E8E2D4;
+  --ink:         #0F0E0D;
+  --ink-2:       #3A352E;
+  --muted:       #857C6E;
+  --yellow:      #FFE34A;
+  --yellow-deep: #F5C500;
+  --card:        #FFFFFF;
+  --red:         #B71524;
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, monospace;
+}
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+
+nav {
+  display: flex;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-mark {
+  width: 22px; height: 22px;
+  background: var(--yellow);
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+}
+.logo-text {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 12px; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.01em;
+  display: block;
+}
+.logo-byluto {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  display: block;
+}
+
+.wrap        { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+.wrap-narrow { max-width: 680px; margin: 0 auto; padding: 0 28px; }
+
+section { padding: 72px 0; }
+section.tight { padding: 48px 0; }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow-deep);
+  margin-bottom: 18px;
+}
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 22px;
+}
+h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.lede {
+  font-family: var(--sans);
+  font-size: 1.125rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+  margin-bottom: 28px;
+}
+.body {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+.body p + p { margin-top: 12px; }
+
+.spots-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--yellow);
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 18px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.spots-pill .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink);
+}
+
+.form {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-top: 28px;
+  max-width: 520px;
+}
+.form input[type="email"] {
+  flex: 1 1 240px;
+  min-width: 0;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: var(--ink);
+  outline: none;
+}
+.form input[type="email"]::placeholder { color: var(--muted); }
+.form input[type="email"]:focus { background: #FFFEF6; }
+.btn {
+  font-family: var(--sans);
+  font-size: 0.95rem; font-weight: 600;
+  padding: 14px 22px;
+  background: var(--yellow);
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+  white-space: nowrap;
+}
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.btn[disabled] { opacity: 0.5; cursor: default; transform: none; box-shadow: 3px 3px 0 var(--ink); }
+.micro {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-top: 14px;
+}
+.inline-error {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--red);
+  margin: 12px 0 0;
+}
+.inline-success {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  margin: 16px 0 0;
+}
+
+.media-card {
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--ink);
+  background: var(--surface);
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  margin-top: 36px;
+}
+.media-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.media-card.placeholder {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.security {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.security h2 { margin-bottom: 8px; }
+.security .body { font-size: 1rem; }
+
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-top: 28px;
+}
+.security-card {
+  background: var(--card);
+  border: 1px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 22px 24px;
+}
+.security-card-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow-deep);
+  margin-bottom: 10px;
+}
+.security-card h3 {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.security-card p {
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+  margin: 0;
+}
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 36px 0 48px;
+  background: var(--surface);
+}
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.foot-links { display: flex; flex-wrap: wrap; gap: 18px; }
+.foot-links a { color: var(--muted); text-decoration: none; }
+.foot-links a:hover { color: var(--ink); }
+
+@media (max-width: 760px) {
+  nav { padding: 16px 22px; }
+  section { padding: 48px 0; }
+  .security-grid { grid-template-columns: 1fr; }
+  .form { flex-direction: column; }
+  .form input[type="email"], .form .btn { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <a class="logo" href="/" aria-label="MyAITwin by Luto">
+    <span class="logo-mark" aria-hidden="true"></span>
+    <span>
+      <span class="logo-text">MyAITwin</span>
+      <span class="logo-byluto">by Luto</span>
+    </span>
+  </a>
+</nav>
+
+<!-- HERO — content swapped in by JS based on invite state -->
+<section>
+  <div class="wrap">
+
+    <!-- State: loading -->
+    <div id="state-loading">
+      <p class="micro" style="margin: 0;">Loading your invite…</p>
+    </div>
+
+    <!-- State: valid, unredeemed, not at cap -->
+    <div id="state-valid" style="display: none;">
+      <div class="spots-pill"><span class="dot"></span><span id="spots-text">— spots left</span></div>
+      <h1>You're one of the first 50.</h1>
+      <p class="lede">
+        MyAITwin gives Claude permanent memory of everything you know. Your knowledge, stored once, available in every conversation.
+        Built by Luto. Opened slowly. You're in.
+      </p>
+
+      <form id="redeem-form" class="form" onsubmit="event.preventDefault(); submitRedeem();">
+        <input type="email" id="redeem-email" name="email" placeholder="your@email.com" required autocomplete="email">
+        <button type="submit" id="redeem-btn" class="btn">Set up my Twin →</button>
+      </form>
+      <p class="micro">No password. No card. We'll email you a magic link. The whole thing takes under a minute.</p>
+      <p id="redeem-error" class="inline-error" style="display: none;"></p>
+      <p id="redeem-success" class="inline-success" style="display: none;"></p>
+
+      <!-- GIFs section -->
+      <div style="margin-top: 56px;">
+        <p class="eyebrow">The voice recipe</p>
+        <div id="voice-recipe-media" class="media-card placeholder">
+          voice-recipe GIF goes here — swap into public/gifs/MyAITwinVoiceRecipe.gif
+        </div>
+        <p class="body" style="font-size: 0.95rem; color: var(--muted); margin-top: 14px;">
+          You teach Claude your voice once. It writes like you in every conversation from then on.
+        </p>
+      </div>
+
+      <div style="margin-top: 48px;">
+        <p class="eyebrow">End-to-end setup</p>
+        <div class="media-card">
+          <img src="/gifs/MyAITwinDemoEndtoEnd.gif" alt="End-to-end setup demo">
+        </div>
+      </div>
+    </div>
+
+    <!-- State: already redeemed -->
+    <div id="state-redeemed" style="display: none;">
+      <h1>This invite has already been used.</h1>
+      <p class="lede">
+        Each invite works once. If you signed up already, sign back in below — your Twin is waiting.
+      </p>
+      <form class="form" onsubmit="event.preventDefault(); window.location.href = '/';">
+        <button type="submit" class="btn">Go to sign in →</button>
+      </form>
+    </div>
+
+    <!-- State: invalid code -->
+    <div id="state-invalid" style="display: none;">
+      <h1>We don't recognise that invite.</h1>
+      <p class="lede">
+        Double-check the link or the code. If you got this from a friend, ask them to resend it. If we're sold out, you can join the waitlist below.
+      </p>
+      <form class="form" onsubmit="event.preventDefault(); submitWaitlist();">
+        <input type="email" id="waitlist-email-1" name="email" placeholder="your@email.com" required autocomplete="email">
+        <button type="submit" id="waitlist-btn-1" class="btn">Join the waitlist</button>
+      </form>
+      <p id="waitlist-success-1" class="inline-success" style="display: none;"></p>
+    </div>
+
+    <!-- State: at capacity -->
+    <div id="state-fullcap" style="display: none;">
+      <h1>MyAITwin is full for now.</h1>
+      <p class="lede">
+        We opened the first 50 invites and they're all taken. Leave your email below and we'll let you know the moment a spot opens.
+      </p>
+      <form class="form" onsubmit="event.preventDefault(); submitWaitlist();">
+        <input type="email" id="waitlist-email-2" name="email" placeholder="your@email.com" required autocomplete="email">
+        <button type="submit" id="waitlist-btn-2" class="btn">Join the waitlist</button>
+      </form>
+      <p id="waitlist-success-2" class="inline-success" style="display: none;"></p>
+    </div>
+
+    <!-- State: no code in URL -->
+    <div id="state-nocode" style="display: none;">
+      <h1>You'll need an invite to come in.</h1>
+      <p class="lede">
+        MyAITwin is invite-only for now. If you have a code, paste it below. If not, leave your email for the waitlist.
+      </p>
+      <form class="form" onsubmit="event.preventDefault(); submitCodeEntry();">
+        <input type="text" id="code-entry" name="code" placeholder="INVITE CODE" required style="flex: 1 1 240px; min-width: 0; font-family: var(--mono); font-size: 0.95rem; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 8px; box-shadow: 3px 3px 0 var(--ink); color: var(--ink); outline: none; text-transform: uppercase; letter-spacing: 0.08em;">
+        <button type="submit" class="btn">Continue →</button>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<!-- SECURITY — always visible regardless of state -->
+<section class="security">
+  <div class="wrap">
+    <p class="eyebrow">Security and your data</p>
+    <h2>This is yours. Not ours.</h2>
+    <p class="body" style="max-width: 620px;">
+      We built MyAITwin so your knowledge is yours. Not a training set. Not a marketing list. Not something we hold over you. Here is exactly how that works.
+    </p>
+
+    <div class="security-grid">
+      <div class="security-card">
+        <p class="security-card-label">Isolated</p>
+        <h3>Your own tenant</h3>
+        <p>Every user gets a separate tenant. Your knowledge lives in its own row space and its own vector namespace. Nothing crosses between users, ever. We tested this on every tool with a 35-check isolation suite.</p>
+      </div>
+      <div class="security-card">
+        <p class="security-card-label">Exportable</p>
+        <h3>Full export, any time</h3>
+        <p>Your data is yours. Ask and we will hand you everything you have stored, in plain JSON. Delete your account and every row, every vector, every token is wiped within seconds.</p>
+      </div>
+      <div class="security-card">
+        <p class="security-card-label">Not shared</p>
+        <h3>Never used for anything else</h3>
+        <p>We do not train models on your knowledge. We do not share it with third parties. We do not look at it. The only thing we touch is the SHA-256 hash of your token, to verify you're you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span>MyAITwin · by Luto · &copy; 2026 Luto. All rights reserved.</span>
+    <span class="foot-links">
+      <a href="/">Home</a>
+      <a href="/docs">Docs</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="mailto:team@lutolearn.com">Contact</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+// ── State management ─────────────────────────────────────────────────────────
+const STATES = ['loading', 'valid', 'redeemed', 'invalid', 'fullcap', 'nocode'];
+function showState(name) {
+  for (const s of STATES) {
+    const el = document.getElementById('state-' + s);
+    if (el) el.style.display = (s === name) ? '' : 'none';
+  }
+}
+
+// Code from URL: /invite/ABC12345 → "ABC12345"
+function getCodeFromUrl() {
+  const m = window.location.pathname.match(/^\/invite\/([A-Za-z0-9]+)\/?$/);
+  return m ? m[1].toUpperCase() : null;
+}
+
+// ── Initial load ─────────────────────────────────────────────────────────────
+async function init() {
+  const code = getCodeFromUrl();
+  if (!code) { showState('nocode'); return; }
+
+  try {
+    const res = await fetch('/api/invites/check?code=' + encodeURIComponent(code));
+    const data = await res.json();
+    if (!data.valid) {
+      showState('invalid');
+      return;
+    }
+    if (data.redeemed) {
+      showState('redeemed');
+      return;
+    }
+    if (data.cap_reached) {
+      showState('fullcap');
+      return;
+    }
+    // Valid, unredeemed, below cap
+    document.getElementById('spots-text').textContent =
+      data.spots_left + ' of 50 ' + (data.spots_left === 1 ? 'spot left' : 'spots left');
+    showState('valid');
+  } catch (err) {
+    // Network or server error — show the invalid state with a chance to retry/waitlist
+    showState('invalid');
+  }
+}
+
+// ── Redeem ──────────────────────────────────────────────────────────────────
+async function submitRedeem() {
+  const btn   = document.getElementById('redeem-btn');
+  const email = document.getElementById('redeem-email').value.trim();
+  const errEl = document.getElementById('redeem-error');
+  const okEl  = document.getElementById('redeem-success');
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Enter a valid email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch('/api/invites/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: getCodeFromUrl(), email }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      okEl.textContent = 'Check your email. The magic link will set up your Twin in under a minute.';
+      okEl.style.display = 'block';
+      document.getElementById('redeem-email').value = '';
+      btn.textContent = 'Sent ✓';
+    } else {
+      // Map a few known reasons to specific copy; default to generic
+      const map = {
+        invalid_code:     'That invite code is not recognised.',
+        already_redeemed: 'This invite has already been used.',
+        at_capacity:      'MyAITwin just hit capacity. We will send you a waitlist link.',
+        invalid_email:    'Enter a valid email address.',
+        send_failed:      'Could not send the email. Try again in a minute.',
+      };
+      errEl.textContent = map[data.reason] || 'Something went wrong. Try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Set up my Twin →';
+    }
+  } catch (err) {
+    errEl.textContent = 'Could not reach the server. Try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Set up my Twin →';
+  }
+}
+
+// ── Waitlist ────────────────────────────────────────────────────────────────
+async function submitWaitlist() {
+  // Pick whichever waitlist form is visible
+  const which = document.getElementById('state-invalid').style.display !== 'none' ? '1' : '2';
+  const btn   = document.getElementById('waitlist-btn-' + which);
+  const email = document.getElementById('waitlist-email-' + which).value.trim();
+  const okEl  = document.getElementById('waitlist-success-' + which);
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    okEl.textContent = 'Enter a valid email address.';
+    okEl.style.color = 'var(--red)';
+    okEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+
+  try {
+    await fetch('/api/invites/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    okEl.textContent = 'On the list. We will email you when a spot opens.';
+    okEl.style.color = 'var(--ink)';
+    okEl.style.display = 'block';
+    document.getElementById('waitlist-email-' + which).value = '';
+    btn.textContent = 'Added ✓';
+  } catch (err) {
+    okEl.textContent = 'Could not reach the server. Try again.';
+    okEl.style.color = 'var(--red)';
+    okEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Join the waitlist';
+  }
+}
+
+// ── Code entry (no-code state) ──────────────────────────────────────────────
+function submitCodeEntry() {
+  const code = document.getElementById('code-entry').value.trim().toUpperCase();
+  if (!code) return;
+  window.location.href = '/invite/' + encodeURIComponent(code);
+}
+
+init();
+</script>
+
+</body>
+</html>

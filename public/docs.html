@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation · MyAITwin MCP</title>
+<meta name="description" content="How MyAITwin works, the 19 tools, getting started, and three working prompts.">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="MyAITwin MCP · Documentation">
+<meta property="og:description" content="How MyAITwin works. The 19 tools, getting started, troubleshooting, and three working prompts.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://myaitwin.lutolearn.com/docs">
+<meta property="og:image" content="https://myaitwin.lutolearn.com/favicon.svg">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MyAITwin MCP · Documentation">
+<meta name="twitter:description" content="How MyAITwin works. The 19 tools, getting started, troubleshooting, and three working prompts.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #FDFCFA;
+    --surface: #F9F8F4;
+    --line: #E8E2D4;
+    --ink: #0F0E0D;
+    --ink-2: #3A352E;
+    --muted: #857C6E;
+    --yellow: #FFE34A;
+    --mint: #B8E5C8;
+    --coral: #FF5A3C;
+    --sky: #C8DCF0;
+    --shadow: 2px 2px 0 #0F0E0D;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .yellow-bar { height: 6px; background: var(--yellow); }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 18px 0;
+  }
+  .container { max-width: 840px; margin: 0 auto; padding: 0 24px; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .luto-mark {
+    width: 20px; height: 20px;
+    background: var(--yellow);
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+  }
+  .nav-wordmark {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .nav-by {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  main { padding: 56px 0 64px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: 'Source Serif 4', serif;
+    font-size: clamp(2.4rem, 5vw, 3.2rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+  .lede {
+    font-size: 1.15rem;
+    color: var(--ink-2);
+    margin-bottom: 56px;
+    line-height: 1.55;
+  }
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.75rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 56px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  h3 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 32px 0 10px;
+  }
+  p { margin: 0 0 16px; color: var(--ink-2); }
+  ul, ol { margin: 0 0 16px 24px; color: var(--ink-2); }
+  li { margin-bottom: 6px; }
+  a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+  }
+  a:hover { background: var(--yellow); }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 24px 0 16px;
+  }
+  @media (min-width: 720px) {
+    .tools-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .tool-card {
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+  .tool-card .name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .tool-card .desc {
+    font-size: 13px;
+    color: var(--ink-2);
+    margin-top: 4px;
+    line-height: 1.45;
+  }
+  .example {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+    margin: 20px 0;
+  }
+  .example .prompt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--ink);
+    border-left: 3px solid var(--yellow);
+    padding-left: 16px;
+    margin: 6px 0 14px;
+    line-height: 1.5;
+  }
+  .example .demo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .example .demo-tools {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 32px 0 40px;
+    margin-top: 64px;
+  }
+  .footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+  .footer-links a { text-decoration: none; color: var(--muted); }
+  .footer-links a:hover { color: var(--ink); background: transparent; }
+  .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="yellow-bar"></div>
+
+<header>
+  <div class="container">
+    <a class="nav-logo" href="/">
+      <span class="luto-mark"></span>
+      <span class="nav-wordmark">MyAITwin MCP</span>
+      <span class="nav-by">by Luto</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <div class="eyebrow">Documentation · MyAITwin</div>
+    <h1>How MyAITwin works.</h1>
+    <p class="lede">
+      A personal RAG database that connects to Claude. Long-term memory
+      for everything you choose to store: your knowledge, your skills,
+      your voice, your principles. Claude produces output that sounds
+      like you, not like generic AI.
+    </p>
+
+    <!-- ── What MyAITwin Does ── -->
+    <h2 id="what">What MyAITwin does</h2>
+    <p>
+      MyAITwin MCP is a personal RAG (Retrieval-Augmented Generation)
+      database that connects directly to Claude. It gives Claude long-term
+      memory of everything you choose to store: your knowledge, your skills,
+      your voice, your principles. When you ask Claude to help you create
+      something, it searches your twin first. The output sounds like you,
+      not like generic AI.
+    </p>
+
+    <!-- ── How It Works ── -->
+    <h2 id="how">How it works</h2>
+    <p>MyAITwin uses two layers:</p>
+    <ul>
+      <li><strong>Supabase</strong>. Stores your knowledge as structured records with types, tags, and provenance.</li>
+      <li><strong>Pinecone</strong>. Stores semantic vector embeddings so you can search by meaning, not just keywords.</li>
+    </ul>
+    <p>
+      When you search your twin, both layers work together. Keyword and
+      semantic search return results ranked by relevance.
+    </p>
+
+    <!-- ── 19 Tools ── -->
+    <h2 id="tools">The 19 tools</h2>
+    <p>MyAITwin provides 19 MCP tools across four categories.</p>
+
+    <h3>Storing knowledge</h3>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="name">add_knowledge</div><div class="desc">Store a typed, tagged knowledge item.</div></div>
+      <div class="tool-card"><div class="name">add_voice_note</div><div class="desc">Store a voice note transcript with automatic extraction.</div></div>
+      <div class="tool-card"><div class="name">add_document</div><div class="desc">Store a long document with automatic chunking.</div></div>
+      <div class="tool-card"><div class="name">add_from_url</div><div class="desc">Fetch and store a web page.</div></div>
+      <div class="tool-card"><div class="name">add_reference_record</div><div class="desc">Store a creation event linking knowledge and skills used.</div></div>
+    </div>
+
+    <h3>Retrieving knowledge</h3>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="name">search_twin</div><div class="desc">Semantic search across all knowledge.</div></div>
+      <div class="tool-card"><div class="name">search_for_creation</div><div class="desc">Dual search returning skills and knowledge separately.</div></div>
+      <div class="tool-card"><div class="name">get_by_type</div><div class="desc">Retrieve all items of a specific type.</div></div>
+      <div class="tool-card"><div class="name">get_by_tag</div><div class="desc">Retrieve all items with a specific tag.</div></div>
+      <div class="tool-card"><div class="name">list_recent</div><div class="desc">List recently added items.</div></div>
+    </div>
+
+    <h3>Understanding your twin</h3>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="name">get_schema</div><div class="desc">Overview of what types and how many items you have.</div></div>
+      <div class="tool-card"><div class="name">get_sources</div><div class="desc">List all source documents.</div></div>
+      <div class="tool-card"><div class="name">find_patterns</div><div class="desc">Surface recurring patterns across your knowledge.</div></div>
+      <div class="tool-card"><div class="name">synthesise</div><div class="desc">Synthesise across multiple knowledge items on a topic.</div></div>
+    </div>
+
+    <h3>Managing your twin</h3>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="name">update_knowledge</div><div class="desc">Update an existing item.</div></div>
+      <div class="tool-card"><div class="name">delete_knowledge</div><div class="desc">Delete an item.</div></div>
+      <div class="tool-card"><div class="name">add_schema_type</div><div class="desc">Define a new knowledge type.</div></div>
+      <div class="tool-card"><div class="name">update_schema_type</div><div class="desc">Update an existing type definition.</div></div>
+      <div class="tool-card"><div class="name">get_welcome</div><div class="desc">Session initialisation and system prompt.</div></div>
+    </div>
+
+    <!-- ── Getting Started ── -->
+    <h2 id="getting-started">Getting started</h2>
+    <ol>
+      <li>Visit <a href="/">myaitwin.lutolearn.com</a>. Enter your email.</li>
+      <li>Click the magic link in your email.</li>
+      <li>Copy your MCP URL from the <code>/create</code> page.</li>
+      <li>In Claude Desktop: Settings → Connectors → Add custom connector → paste your URL.</li>
+      <li>Start a new conversation. Your twin is connected.</li>
+    </ol>
+
+    <!-- ── Example Prompts ── -->
+    <h2 id="examples">Example prompts</h2>
+    <p>
+      Three working prompts that demonstrate core MyAITwin functionality.
+      Paste any of these into a fresh Claude Desktop conversation with
+      your twin connected.
+    </p>
+
+    <div class="example">
+      <div class="demo">Example 1. Storing a principle</div>
+      <p class="prompt">
+        "Store this as a principle: I always structure presentations from
+        general to specific. Start with the big picture, then drill into
+        the detail. This applies to every presentation I give."
+      </p>
+      <div class="demo-tools">
+        <span class="pill">add_knowledge</span>
+        Shows typed storage, automatic tagging, the propose-confirm-store flow.
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="demo">Example 2. Retrieving knowledge</div>
+      <p class="prompt">
+        "What do I have stored about proposal writing? Give me everything relevant."
+      </p>
+      <div class="demo-tools">
+        <span class="pill">search_twin</span>
+        Shows semantic retrieval, inline source and date citations, provenance tags.
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="demo">Example 3. Creating from stored knowledge</div>
+      <p class="prompt">
+        "Help me write a LinkedIn post about why professionals should build
+        their own AI knowledge layer. Use whatever I have stored that fits."
+      </p>
+      <div class="demo-tools">
+        <span class="pill">search_for_creation</span>
+        Shows dual retrieval, skill application, output that sounds like you.
+      </div>
+    </div>
+
+    <!-- ── Troubleshooting ── -->
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <p><strong>Twin not responding.</strong> Start a fresh Claude conversation. The system prompt establishes on session start.</p>
+    <p><strong>Retrieval returning nothing.</strong> Try different search terms. Semantic search works best with natural language queries.</p>
+    <p><strong>Storage timing out.</strong> Large documents (over 100KB) may take 30 to 60 seconds. If it fails, split the document and try again.</p>
+    <p><strong>Lost your MCP URL.</strong> Visit <code>/create</code> and use the Regenerate button. Your old URL will stop working immediately.</p>
+
+    <!-- ── Pricing ── -->
+    <h2 id="pricing">Pricing</h2>
+    <p>MyAITwin is currently free to use.</p>
+
+    <!-- ── Contact ── -->
+    <h2 id="contact">Contact</h2>
+    <p>
+      Support: <a href="mailto:team@lutolearn.com">team@lutolearn.com</a><br>
+      Security: <a href="mailto:team@lutolearn.com">team@lutolearn.com</a><br>
+      Privacy: <a href="mailto:team@lutolearn.com">team@lutolearn.com</a>
+    </p>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-row">
+      <span>MyAITwin MCP · by Luto · &copy; 2026 Luto. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/docs">Docs</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="mailto:team@lutolearn.com">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

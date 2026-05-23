@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/create",         "destination": "/create.html" },
+    { "source": "/invite",         "destination": "/invite.html" },
+    { "source": "/invite/:code",   "destination": "/invite.html" },
+    { "source": "/privacy",        "destination": "/privacy.html" },
+    { "source": "/terms",          "destination": "/terms.html" },
+    { "source": "/docs",           "destination": "/docs.html" }
+  ],
+  "redirects": [
+    { "source": "/dashboard.html", "destination": "/create", "permanent": true },
+    { "source": "/dashboard",      "destination": "/create", "permanent": true },
+    { "source": "/mcp/:userId",    "destination": "/create",  "permanent": true },
+    { "source": "/admin",          "destination": "/", "permanent": true },
+    { "source": "/admin.html",     "destination": "/", "permanent": true }
+  ],
+  "functions": {
+    "api/mcp/[token].js":                  { "maxDuration": 60 },
+    "api/auth/request.js":                 { "maxDuration": 10 },
+    "api/auth/verify.js":                  { "maxDuration": 10 },
+    "api/oauth/authorize.js":              { "maxDuration": 15 },
+    "api/oauth/callback.js":               { "maxDuration": 15 },
+    "api/oauth/token.js":                  { "maxDuration": 15 },
+    "api/oauth/register.js":               { "maxDuration": 10 },
+    "api/dashboard/me.js":                 { "maxDuration": 10 },
+    "api/dashboard/regenerate-token.js":   { "maxDuration": 10 },
+    "api/dashboard/delete-account.js":     { "maxDuration": 30 },
+    "api/invites/check.js":                { "maxDuration": 10 },
+    "api/invites/redeem.js":               { "maxDuration": 15 },
+    "api/invites/waitlist.js":             { "maxDuration": 10 },
+    "api/admin/test-cross-tenant.js":      { "maxDuration": 120 },
+    "api/admin/backfill-pinecone-types.js":{ "maxDuration": 300 },
+    "api/admin/seed-invites.js":           { "maxDuration": 60 },
+    "api/admin/dashboard.js":              { "maxDuration": 30 },
+    "api/admin/mint-test-token.js":        { "maxDuration": 15 },
+    "api/gifs.js":                         { "maxDuration": 10 }
+  }
+}

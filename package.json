@@ -1,0 +1,22 @@
+{
+  "name": "mytwin",
+  "version": "2.0.0",
+  "description": "MyAITwin MCP by Luto. Personal knowledge twin, hosted multi-tenant.",
+  "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@pinecone-database/pinecone": "^3.0.0",
+    "@supabase/supabase-js": "^2.43.0",
+    "jose": "^5.9.6",
+    "openai": "^4.47.0",
+    "resend": "^4.0.0",
+    "ws": "^8.20.1",
+    "zod": "^3.23.0"
+  }
+}
