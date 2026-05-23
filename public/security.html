@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security · MyAITwin MCP</title>
+<meta name="description" content="How MyAITwin protects your data. Authentication, isolation, encryption, abuse controls, and how to reach us about security issues.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #FDFCFA;
+    --surface: #F9F8F4;
+    --line: #E8E2D4;
+    --ink: #0F0E0D;
+    --ink-2: #3A352E;
+    --muted: #857C6E;
+    --yellow: #FFE34A;
+    --shadow: 2px 2px 0 #0F0E0D;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .yellow-bar { height: 6px; background: var(--yellow); width: 100%; }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 18px 0;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .luto-mark {
+    width: 20px; height: 20px;
+    background: var(--yellow);
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+  }
+  .nav-wordmark {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .nav-by {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  main { padding: 64px 0 80px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: 'Source Serif 4', serif;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+  .last-updated { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-bottom: 48px; }
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 40px 0 14px;
+    color: var(--ink);
+  }
+  h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 24px 0 8px;
+    color: var(--ink);
+  }
+  p { margin: 0 0 16px; color: var(--ink-2); }
+  ul { margin: 0 0 16px 22px; color: var(--ink-2); }
+  ul li { margin-bottom: 6px; }
+  a { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  a:hover { background: var(--yellow); }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .operator-block {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0 16px;
+  }
+  .operator-block p { margin-bottom: 8px; }
+  .operator-block p:last-child { margin-bottom: 0; }
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 32px 0 40px;
+    margin-top: 64px;
+  }
+  .footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+  .footer-links a { text-decoration: none; color: var(--muted); }
+  .footer-links a:hover { color: var(--ink); background: transparent; }
+</style>
+</head>
+<body>
+
+<div class="yellow-bar"></div>
+
+<header>
+  <div class="container">
+    <a class="nav-logo" href="/">
+      <span class="luto-mark"></span>
+      <span class="nav-wordmark">MyAITwin MCP</span>
+      <span class="nav-by">by Luto</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <div class="eyebrow">Security · MyAITwin</div>
+    <h1>How we protect your data.</h1>
+    <p class="last-updated">Last updated 23 May 2026.</p>
+
+    <p>
+      MyAITwin stores knowledge you have explicitly chosen to put in. That content
+      is the product. The controls below describe how we keep it isolated, how we
+      authenticate access, and how to reach us if you find a problem.
+    </p>
+
+    <h2>1. Authentication</h2>
+
+    <h3>Sign-in: magic link only</h3>
+    <p>
+      We do not use passwords. To sign in, you enter your email and we send a
+      single-use link that expires in 15 minutes. The link is bound to one email
+      address and one redemption. We collapse "not found", "already used", and
+      "expired" into one error to avoid leaking which sub-state failed.
+    </p>
+
+    <h3>Session: short-lived signed cookie</h3>
+    <p>
+      Once signed in, a signed JWT is stored in an <code>HttpOnly</code>,
+      <code>Secure</code>, <code>SameSite=Lax</code> cookie. Sessions expire after
+      30 days. Sign-out clears the cookie immediately.
+    </p>
+
+    <h3>MCP token: per-user bearer, hashed at rest</h3>
+    <p>
+      Each account holds one active MCP token. The plaintext is returned to you
+      exactly once on issue. After that we only store the SHA-256 hash. You can
+      regenerate the token from your account page at any time, which immediately
+      revokes the previous one.
+    </p>
+
+    <h3>OAuth 2.0 for Claude Desktop</h3>
+    <p>
+      For connector flows we implement the OAuth 2.0 authorization code flow.
+      Client secrets are stored as SHA-256 hashes only. Authorization codes are
+      single-use and expire in 5 minutes.
+    </p>
+
+    <h2>2. Multi-tenant isolation</h2>
+    <p>
+      Every user has their own tenant. Every knowledge item, schema type, source,
+      and audit row carries a <code>tenant_id</code>. Every database query filters
+      by both <code>user_id</code> and <code>tenant_id</code>. Pinecone vector
+      data lives in per-tenant namespaces; queries to one tenant's namespace
+      cannot reach another's.
+    </p>
+    <p>
+      We continuously run a cross-tenant test suite that attempts to read, write,
+      update, and delete one tenant's data while authenticated as another. All
+      attempts must fail before we ship.
+    </p>
+
+    <h2>3. Rate limiting and abuse prevention</h2>
+    <p>
+      Every MCP tool call and every authentication request is rate-limited
+      per-user. Sustained abuse trips a cooldown. Sign-in attempts are bounded
+      to prevent enumeration attacks.
+    </p>
+    <p>
+      All admin endpoints require a separate header secret with constant-time
+      comparison.
+    </p>
+
+    <h2>4. Prompt injection defences</h2>
+    <p>
+      Content stored in MyAITwin is treated as data, not as instructions for the
+      assistant. When retrieved, content is returned with explicit provenance
+      and the assistant is instructed never to follow instructions it finds
+      inside stored content.
+    </p>
+
+    <h2>5. Audit logging</h2>
+    <p>
+      We record every tool call, every authentication event, and every admin
+      action with user, tenant, event type, success or failure, and a short error
+      tag. We do not log the content of stored knowledge, transcripts, or raw
+      tokens. The audit log is append-only and is retained for debugging and
+      incident response.
+    </p>
+
+    <h2>6. Transport and storage</h2>
+    <p>
+      All traffic is over TLS. Our database (Supabase Postgres) and vector store
+      (Pinecone) are managed by third-party providers with their own security
+      posture; we use service-role keys server-side and never expose them to
+      the browser.
+    </p>
+
+    <h2>7. Account deletion</h2>
+    <p>
+      You can delete your account at any time from your account page. Deletion
+      removes your user record, all knowledge items, all schema types, all
+      sources, all MCP tokens, and all vector embeddings for your tenant. It is
+      immediate and irreversible.
+    </p>
+
+    <h2>8. Responsible disclosure</h2>
+    <p>
+      If you find a security issue, please contact us at
+      <a href="mailto:team@lutolearn.com">team@lutolearn.com</a>. We take security
+      reports seriously and will respond within two working days.
+    </p>
+    <p>Please do not publicly disclose the issue until we have had a chance to fix it.</p>
+
+    <h2>9. Operator</h2>
+    <div class="operator-block">
+      <p><strong>MyAITwin</strong>, a product of Luto Ventures Ltd</p>
+      <p>Company number: 16563350</p>
+      <p>Registered office: 86&ndash;90 Paul Street, London, England, EC2A 4NE</p>
+      <p>Contact: <a href="mailto:team@lutolearn.com">team@lutolearn.com</a></p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-row">
+      <span>MyAITwin MCP &middot; by Luto &middot; &copy; 2026 Luto. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/docs">Docs</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/security">Security</a>
+        <a href="mailto:team@lutolearn.com">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
