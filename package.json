@@ -6,9 +6,7 @@
   "engines": {
     "node": "20.x"
   },
-  "scripts": {
-    "dev": "vercel dev"
-  },
+  "scripts": {},
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@pinecone-database/pinecone": "^3.0.0",

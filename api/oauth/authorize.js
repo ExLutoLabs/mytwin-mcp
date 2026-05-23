@@ -27,7 +27,7 @@ function escape(s) {
 
 // Single-page login form. Posts back to itself with the OAuth params kept on
 // hidden inputs so the round-trip works on basic browsers.
-function renderLogin({ clientId, redirectUri, state, scope, clientName, error }) {
+function renderLogin({ clientId, redirectUri, state, scope, codeChallenge, codeChallengeMethod, clientName, error }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,6 +75,8 @@ function renderLogin({ clientId, redirectUri, state, scope, clientName, error })
       <input type="hidden" name="redirect_uri"  value="${escape(redirectUri)}">
       <input type="hidden" name="state"         value="${escape(state || '')}">
       <input type="hidden" name="scope"         value="${escape(scope || '')}">
+      <input type="hidden" name="code_challenge"        value="${escape(codeChallenge || '')}">
+      <input type="hidden" name="code_challenge_method" value="${escape(codeChallengeMethod || '')}">
       <input type="email"  name="email"         placeholder="your@email.com" autocomplete="email" autofocus required>
       <button type="submit">Send magic link →</button>
       <div class="err">${error ? escape(error) : ''}</div>
@@ -99,7 +101,7 @@ export default async function handler(req, res) {
 }
 
 async function handleAuthorize(req, res) {
-  const { client_id, redirect_uri, response_type, state, scope } = req.query || {};
+  const { client_id, redirect_uri, response_type, state, scope, code_challenge, code_challenge_method } = req.query || {};
   if (response_type !== 'code') {
     return res.status(400).json({ error: 'unsupported_response_type', error_description: 'Only response_type=code is supported.' });
   }
@@ -110,13 +112,23 @@ async function handleAuthorize(req, res) {
   if (!isRedirectUriAllowed(client, redirect_uri)) {
     return res.status(400).json({ error: 'invalid_request', error_description: 'redirect_uri is not registered for this client.' });
   }
+  // PKCE is required by the MCP authorization spec. S256 is the only method
+  // we accept (matches advertised code_challenge_methods_supported).
+  if (!code_challenge) {
+    return res.status(400).json({ error: 'invalid_request', error_description: 'code_challenge is required (PKCE).' });
+  }
+  if ((code_challenge_method || 'plain') !== 'S256') {
+    return res.status(400).json({ error: 'invalid_request', error_description: 'Only code_challenge_method=S256 is supported.' });
+  }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).send(renderLogin({
-    clientId:    client.client_id,
-    redirectUri: redirect_uri,
+    clientId:            client.client_id,
+    redirectUri:         redirect_uri,
     state, scope,
-    clientName:  client.name,
+    codeChallenge:       code_challenge,
+    codeChallengeMethod: code_challenge_method,
+    clientName:          client.name,
   }));
 }
 
@@ -124,15 +136,20 @@ async function handleSubmit(req, res) {
   // Body may be url-encoded (HTML form) — Vercel parses application/x-www-form-urlencoded
   // into req.body when the content-type matches.
   const body = req.body || {};
-  const client_id    = String(body.client_id    || '');
-  const redirect_uri = String(body.redirect_uri || '');
-  const state        = String(body.state        || '');
-  const scope        = String(body.scope        || '');
-  const email        = String(body.email        || '').trim().toLowerCase();
+  const client_id             = String(body.client_id             || '');
+  const redirect_uri          = String(body.redirect_uri          || '');
+  const state                 = String(body.state                 || '');
+  const scope                 = String(body.scope                 || '');
+  const code_challenge        = String(body.code_challenge        || '');
+  const code_challenge_method = String(body.code_challenge_method || '');
+  const email                 = String(body.email                 || '').trim().toLowerCase();
 
   const client = await getClient(client_id);
   if (!client || !isRedirectUriAllowed(client, redirect_uri)) {
     return res.status(400).json({ error: 'invalid_request' });
+  }
+  if (!code_challenge || code_challenge_method !== 'S256') {
+    return res.status(400).json({ error: 'invalid_request', error_description: 'PKCE S256 challenge required.' });
   }
 
   // Rate limit per email — 10/hr per Section 8 spec (separate bucket from
@@ -156,10 +173,12 @@ async function handleSubmit(req, res) {
       const db = getDB();
       await db.from('magic_tokens')
         .update({
-          oauth_client_id:    client.client_id,
-          oauth_redirect_uri: redirect_uri,
-          oauth_state:        state || null,
-          oauth_scope:        scope || null,
+          oauth_client_id:             client.client_id,
+          oauth_redirect_uri:          redirect_uri,
+          oauth_state:                 state || null,
+          oauth_scope:                 scope || null,
+          oauth_code_challenge:        code_challenge,
+          oauth_code_challenge_method: code_challenge_method,
         })
         .eq('token', token);
 

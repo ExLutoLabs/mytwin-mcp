@@ -24,7 +24,7 @@ async function readOAuthContextThenInvalidate(token) {
   // the email and the OAuth params; verifyMagicToken returns email but not
   // the oauth_* columns). Single read, then atomic consume via verifyMagicToken.
   const { data: row } = await db.from('magic_tokens')
-    .select('oauth_client_id, oauth_redirect_uri, oauth_state, oauth_scope')
+    .select('oauth_client_id, oauth_redirect_uri, oauth_state, oauth_scope, oauth_code_challenge, oauth_code_challenge_method')
     .eq('token', token)
     .eq('used', false)
     .gte('expires_at', new Date().toISOString())
@@ -81,12 +81,14 @@ export default async function handler(req, res) {
   }
 
   const { code } = await issueAuthCode({
-    userId:      user.id,
-    tenantId:    user.tenant_id,
-    clientId:    oauthCtx.oauth_client_id,
-    redirectUri: oauthCtx.oauth_redirect_uri,
-    state:       oauthCtx.oauth_state,
-    scope:       oauthCtx.oauth_scope,
+    userId:              user.id,
+    tenantId:            user.tenant_id,
+    clientId:            oauthCtx.oauth_client_id,
+    redirectUri:         oauthCtx.oauth_redirect_uri,
+    state:               oauthCtx.oauth_state,
+    scope:               oauthCtx.oauth_scope,
+    codeChallenge:       oauthCtx.oauth_code_challenge,
+    codeChallengeMethod: oauthCtx.oauth_code_challenge_method,
   });
 
   logAudit({
