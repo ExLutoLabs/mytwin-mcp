@@ -36,7 +36,11 @@ export default async function handler(req, res) {
 
   try {
     const { email, inviteCode } = await verifyMagicToken(token);
-    const { user, isNew, mintedInviteCode } = await getOrCreateUser(email, { inviteCode });
+    // Open signups — match the OAuth callback flow. New users self-serve from
+    // the landing-page email form; invited users still get their invite
+    // redeemed + a personal outbound invite minted (handled inside
+    // getOrCreateUser when inviteCode is set).
+    const { user, isNew, mintedInviteCode } = await getOrCreateUser(email, { inviteCode, allowUninvited: true });
     const jwt = await createSessionToken(user.id, user.email);
 
     logAudit({
