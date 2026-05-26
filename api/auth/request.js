@@ -128,5 +128,5 @@ function buildEmailHtml(url) {
 }
 
 function buildEmailText(url) {
-  return `MyAITwin MCP — by Luto\n\nYour Twin is ready.\n\nClick the link below to sign in. This link expires in 15 minutes and works once.\n\n${url}\n\nIf you did not request this, ignore this email. Nothing will happen.`;
+  return `MyAITwin MCP by Luto\n\nYour Twin is ready.\n\nClick the link below to sign in. This link expires in 15 minutes and works once.\n\n${url}\n\nIf you did not request this, ignore this email. Nothing will happen.`;
 }
