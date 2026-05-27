@@ -95,6 +95,26 @@
           Everything you know, at your fingertips. Available in every conversation.
         </p>
 
+        <!-- ── Connect to Claude card (primary action) ─────────────────────── -->
+        <div style="margin-bottom: 36px;">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #857C6E; margin-bottom: 10px;">CONNECT TO CLAUDE</div>
+          <!-- Server URL display -->
+          <div style="background: #0F0E0D; border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #FFE34A; flex: 1; overflow-x: auto; white-space: nowrap;">https://myaitwin.lutolearn.com/api/mcp</code>
+            <button onclick="copyServerUrl()" id="copy-server-btn"
+              style="padding: 8px 16px; background: #FDFCFA; border: 1.5px solid #FDFCFA; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #0F0E0D; cursor: pointer; white-space: nowrap; transition: opacity 150ms;"
+              onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">COPY</button>
+          </div>
+          <!-- Open Claude button + note -->
+          <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <a href="https://claude.ai/settings/connectors" target="_blank" rel="noopener noreferrer"
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: #FFE34A; color: #0F0E0D; border: 1.5px solid #0F0E0D; border-radius: 8px; box-shadow: 2px 2px 0 #0F0E0D; font-family: Inter, sans-serif; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 150ms;"
+              onmouseover="this.style.boxShadow='none';this.style.transform='translate(2px,2px)'"
+              onmouseout="this.style.boxShadow='2px 2px 0 #0F0E0D';this.style.transform='none'">Open Claude Connectors →</a>
+            <p style="font-family: Inter, sans-serif; font-size: 13px; color: #857C6E; margin: 0; line-height: 1.5;">Copy the URL, paste it into Claude Connectors.<br>Claude signs you in automatically. No second email needed.</p>
+          </div>
+        </div>
+
         <!-- MCP URL label -->
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #857C6E; margin-bottom: 8px;">
           YOUR AI TWIN URL
@@ -180,7 +200,7 @@
               font-size: 11px; font-weight: 700; color: #0F0E0D;
             ">1</span>
             <p style="font-family: Inter, sans-serif; font-size: 15px; color: #0F0E0D; margin: 0; padding-top: 2px;">
-              Copy your Twin URL from the field above. Keep it somewhere safe. It contains a secret token.
+              Copy your server URL from the card above: <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#F9F8F4;border:1px solid #E8E2D4;padding:2px 7px;border-radius:4px;">https://myaitwin.lutolearn.com/api/mcp</code>
             </p>
           </div>
 
@@ -214,7 +234,7 @@
                 Open a new chat and say hello.
               </p>
               <p style="font-family: Inter, sans-serif; font-size: 15px; color: #3A352E; margin: 0;">
-                Your Twin is live and ready.
+                Claude connects your account automatically. Since you signed in here, no second email needed.
               </p>
             </div>
           </div>
@@ -502,7 +522,7 @@ The first item is useful. The hundredth is indispensable.</pre>
         </div>
         <!-- Install instructions -->
         <p style="font-family:Inter,sans-serif;font-size:15px;color:#3A352E;line-height:1.6;margin:0 0 20px;">
-          Copy your Twin URL from the field above. Open Claude Desktop, go to Settings, then Connectors, click Add custom connector, paste your URL and hit Add. Open a new chat and say hello. Your Twin is live and ready.
+          Copy your server URL from the card at the top of this page. Open Claude Desktop, go to Settings, then Connectors, click Add custom connector, paste the URL and hit Add. Claude connects your account automatically. Open a new chat and say hello. Your Twin is live and ready.
         </p>
 
         <!-- Closing line -->
@@ -715,6 +735,13 @@ The first item is useful. The hundredth is indispensable.</pre>
         btn.disabled = false;
         btn.textContent = 'Delete forever';
       }
+    }
+
+    function copyServerUrl() {
+      navigator.clipboard.writeText('https://myaitwin.lutolearn.com/api/mcp');
+      const btn = document.getElementById('copy-server-btn');
+      btn.textContent = 'COPIED ✓';
+      setTimeout(() => btn.textContent = 'COPY', 2000);
     }
 
     loadMcpUrl();

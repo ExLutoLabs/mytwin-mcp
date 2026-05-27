@@ -6,8 +6,8 @@
 // stored on the magic_tokens row so /api/oauth/callback can recover them.
 
 import { Resend } from 'resend';
-import { createMagicToken } from '../../lib/auth.js';
-import { getClient, isRedirectUriAllowed, buildRedirect } from '../../lib/oauth.js';
+import { createMagicToken, requireAuth } from '../../lib/auth.js';
+import { getClient, isRedirectUriAllowed, buildRedirect, issueAuthCode } from '../../lib/oauth.js';
 import { getDB } from '../../lib/supabase.js';
 import { checkRateLimit, RATE_LIMITS } from '../../lib/rate-limit.js';
 import { logAudit } from '../../lib/audit.js';
@@ -120,6 +120,49 @@ async function handleAuthorize(req, res) {
   if ((code_challenge_method || 'plain') !== 'S256') {
     return res.status(400).json({ error: 'invalid_request', error_description: 'Only code_challenge_method=S256 is supported.' });
   }
+  // ── Session bypass ────────────────────────────────────────────────────────────
+  // If the user already holds a valid mt_session cookie (set by the landing-page
+  // magic link flow), skip the email form entirely and issue the auth code right
+  // now. SameSite=Lax lets the cookie through on this top-level GET navigation,
+  // so a user who just clicked the magic link can connect Claude in one click.
+  try {
+    const session = await requireAuth(req);
+    if (session?.userId) {
+      const db = getDB();
+      const { data: user } = await db.from('users')
+        .select('id, tenant_id')
+        .eq('id', session.userId)
+        .maybeSingle();
+      if (user) {
+        const { code } = await issueAuthCode({
+          userId:              user.id,
+          tenantId:            user.tenant_id,
+          clientId:            client.client_id,
+          redirectUri:         redirect_uri,
+          state,
+          scope,
+          codeChallenge:       code_challenge,
+          codeChallengeMethod: code_challenge_method,
+        });
+        logAudit({
+          userId:    user.id,
+          tenantId:  user.tenant_id,
+          eventType: 'oauth_code_issued',
+          success:   true,
+          context:   { client_id: client.client_id, via: 'session_bypass' },
+        });
+        const target = buildRedirect(redirect_uri, { code, state });
+        res.setHeader('Cache-Control', 'no-store');
+        res.writeHead(302, { Location: target });
+        return res.end();
+      }
+    }
+  } catch (err) {
+    // Session check failed — fall through to the email form
+    console.error('[oauth/authorize] session bypass error:', err?.message);
+  }
+
+  // No valid session — show the email form as before
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).send(renderLogin({

@@ -509,6 +509,41 @@
   .hero-sub { animation: fadeUp 0.5s 0.1s ease both; }
   .hero-actions { animation: fadeUp 0.5s 0.2s ease both; }
 </style>
+  <link rel="canonical" href="https://myaitwin.lutolearn.com/" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://myaitwin.lutolearn.com/#software",
+        "name": "MyAITwin MCP",
+        "alternateName": ["MyAITwin", "MyAITwin MCP by Luto"],
+        "description": "A personal RAG database and semantic search engine you build from inside your AI chat. Store your knowledge, voice, and skills once, then Claude and ChatGPT create work that sounds like you.",
+        "url": "https://myaitwin.lutolearn.com/",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Any",
+        "softwareVersion": "1.0.0",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "category": "Free during early access"
+        },
+        "publisher": { "@id": "https://lutolearn.com/#org" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://lutolearn.com/#org",
+        "name": "Luto Labs",
+        "alternateName": "Luto",
+        "url": "https://lutolearn.com",
+        "logo": "https://myaitwin.lutolearn.com/favicon.svg"
+      }
+    ]
+  }
+  </script>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
@@ -717,22 +752,22 @@
       <div class="step">
         <div class="step-num">Step 01</div>
         <div class="step-label">Enter your email</div>
-        <div class="step-desc">Go to myaitwin.lutolearn.com. Enter your email. That is the whole signup.</div>
+        <div class="step-desc">Enter your email below. Check your inbox and click the magic link. Takes 30 seconds.</div>
         <div class="step-line"></div>
       </div>
       <div class="step">
         <div class="step-num">Step 02</div>
-        <div class="step-label">Get your magic link</div>
-        <div class="step-desc">Check your inbox. Click the link. Your personal MCP URL is on the other side.</div>
+        <div class="step-label">Copy your server URL</div>
+        <div class="step-desc">The next page shows your server URL. One click to copy it.</div>
         <div class="step-line"></div>
       </div>
       <div class="step">
         <div class="step-num">Step 03</div>
-        <div class="step-label">Attach and go</div>
-        <div class="step-desc">Copy your URL into your MCP settings. Your twin is live in every conversation from now on.</div>
+        <div class="step-label">Add to Claude</div>
+        <div class="step-desc">Paste the URL into Claude Connectors. Claude signs you in automatically. Your twin is live.</div>
       </div>
     </div>
-    <p style="margin-top: 32px; font-size: 13px; color: var(--muted);">Requires MCP capability. Currently supported by Claude Pro, Claude Team, and ChatGPT Pro.</p>
+    <p style="margin-top: 32px; font-size: 13px; color: var(--muted);">Requires Claude (Pro, Team, or Max) with connectors enabled.</p>
   </div>
 </section>
 
