@@ -142,11 +142,19 @@ const RPC_CANDIDATES = ['exec_sql', 'query', 'execute_sql', 'run_sql'];
 let succeeded = false;
 let lastError = null;
 
+// Supabase JS v2 returns a thenable from .rpc() that doesn't support .catch();
+// wrap each call in try/catch so an exception (or rejection) is surfaced the
+// same as an error response.
+async function tryRpc(name, params) {
+  try { return await db.rpc(name, params); }
+  catch (e) { return { error: e }; }
+}
+
 for (const name of RPC_CANDIDATES) {
-  const r = await db.rpc(name, { query: sql }).catch(e => ({ error: e }));
+  const r = await tryRpc(name, { query: sql });
   if (!r.error) { console.log(`  ✓ Applied via rpc('${name}', { query })`); succeeded = true; break; }
   lastError = r.error;
-  const r2 = await db.rpc(name, { sql }).catch(e => ({ error: e }));
+  const r2 = await tryRpc(name, { sql });
   if (!r2.error) { console.log(`  ✓ Applied via rpc('${name}', { sql })`); succeeded = true; break; }
   lastError = r2.error;
 }

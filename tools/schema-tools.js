@@ -14,9 +14,12 @@ function sbError(op, error) {
 export async function getSchema(ctx) {
   const db = getDB();
 
+  let countsQ = db.from('knowledge').select('type').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId);
+  if (ctx.visibilityFilter === 'sharable') countsQ = countsQ.eq('visibility', 'sharable');
+
   const [{ data: types }, { data: counts }] = await Promise.all([
     db.from('schema_types').select('*').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId).order('created_at'),
-    db.from('knowledge').select('type').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId),
+    countsQ,
   ]);
 
   const countMap = {};

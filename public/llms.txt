@@ -1,0 +1,18 @@
+# MyAITwin MCP
+
+> A personal RAG database and semantic search engine you build from inside your AI chat. Store your knowledge, voice, and skills once, then Claude and ChatGPT create work that sounds like you. Free during early access.
+
+MyAITwin connects to Claude, ChatGPT and any MCP-capable client over a remote streamable-HTTP MCP server with OAuth 2.1 + PKCE auth. Nineteen tools across four categories: store, retrieve, understand, manage. Built by Luto Labs.
+
+## Key pages
+- [Home](https://myaitwin.lutolearn.com/): what MyAITwin is and how it works
+- [Docs](https://myaitwin.lutolearn.com/docs): the 19 tools, getting started, working prompts
+- [Privacy](https://myaitwin.lutolearn.com/privacy): what is collected, how it is stored, your rights
+- [Terms](https://myaitwin.lutolearn.com/terms): terms of service
+- [Security](https://myaitwin.lutolearn.com/security): authentication, isolation, abuse controls
+
+## Endpoints
+- MCP endpoint: https://myaitwin.lutolearn.com/mcp
+- OAuth discovery: https://myaitwin.lutolearn.com/.well-known/oauth-authorization-server
+- Repository: https://github.com/LutoLabs/mytwin-mcp
+- Official MCP Registry: com.lutolearn/myaitwin

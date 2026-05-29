@@ -1,6 +1,19 @@
-// GET /api/auth/verify?token=... — validate magic link, create session
-import { verifyMagicToken, getOrCreateUser, createSessionToken } from '../../lib/auth.js';
-import { logAudit } from '../../lib/audit.js';
+// GET /api/auth/verify?token=... — validate magic link, create session.
+//
+// Two flows:
+//   1. Regular sign-in (no claim_tenant_id in token) — existing behaviour.
+//   2. Claim flow     (claim_tenant_id present)       — anon session → real account.
+//      a. New email   → claimAnonTenantAsNewUser: upgrades placeholder in-place.
+//      b. Known email → mergeAnonIntoExistingUser: moves knowledge across tenants.
+//      After a successful claim the browser is sent to /twin?claimed=1 so the
+//      /twin page can show a personalised welcome-back message.
+
+import {
+  verifyMagicToken, getOrCreateUser, createSessionToken,
+  claimAnonTenantAsNewUser, mergeAnonIntoExistingUser,
+} from '../../lib/auth.js';
+import { getDB }     from '../../lib/supabase.js';
+import { logAudit }  from '../../lib/audit.js';
 
 const APP_URL = process.env.APP_URL || 'https://myaitwin.lutolearn.com';
 
@@ -35,12 +48,52 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, inviteCode } = await verifyMagicToken(token);
-    // Open signups — match the OAuth callback flow. New users self-serve from
-    // the landing-page email form; invited users still get their invite
-    // redeemed + a personal outbound invite minted (handled inside
-    // getOrCreateUser when inviteCode is set).
-    const { user, isNew, mintedInviteCode } = await getOrCreateUser(email, { inviteCode, allowUninvited: true });
+    const { email, inviteCode, claimTenantId } = await verifyMagicToken(token);
+
+    let user, isNew = false, mintedInviteCode = null, isClaim = false;
+
+    if (claimTenantId) {
+      // ── Claim path: anon session → real account ───────────────────────────
+      isClaim = true;
+      try {
+        const db = getDB();
+        // Check if this email is already a real user (not the anon placeholder).
+        const { data: existingUser } = await db
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (existingUser) {
+          // Known email: merge captures from the anon tenant then sign in.
+          await mergeAnonIntoExistingUser(existingUser, claimTenantId);
+          user  = existingUser;
+          isNew = false;
+        } else {
+          // New email: upgrade the placeholder user row in-place.
+          const result = await claimAnonTenantAsNewUser(email, claimTenantId);
+          user  = result.user;
+          isNew = true;
+        }
+      } catch (claimErr) {
+        // Non-fatal: fall back to regular sign-in so the user still gets a
+        // session even if the merge / upgrade failed. Log for ops.
+        console.error('[verify] claim mutation failed, falling back:', claimErr.message);
+        const result = await getOrCreateUser(email, { allowUninvited: true });
+        user  = result.user;
+        isNew = result.isNew;
+        mintedInviteCode = result.mintedInviteCode;
+        isClaim = false; // don't send to /twin?claimed=1 if we fell back
+      }
+    } else {
+      // ── Regular sign-in / sign-up path ───────────────────────────────────
+      // Open signups — new users self-serve; invited users get invite redeemed.
+      const result = await getOrCreateUser(email, { inviteCode, allowUninvited: true });
+      user             = result.user;
+      isNew            = result.isNew;
+      mintedInviteCode = result.mintedInviteCode;
+    }
+
     const jwt = await createSessionToken(user.id, user.email);
 
     logAudit({
@@ -48,13 +101,21 @@ export default async function handler(req, res) {
       tenantId:  user.tenant_id || null,
       eventType: 'magic_link_verified',
       success:   true,
-      context:   { is_new_user: isNew, invite_redeemed: !!(isNew && inviteCode), minted_invite: mintedInviteCode || null },
+      context:   {
+        is_new_user:     isNew,
+        is_claim:        isClaim,
+        invite_redeemed: !!(isNew && inviteCode),
+        minted_invite:   mintedInviteCode || null,
+      },
     });
 
-    // Set cookie explicitly, then serve an HTML page that navigates to /create.
-    // Using a 200 + JS redirect (not 302) ensures the browser processes the
-    // Set-Cookie header before following the navigation — some browsers silently
-    // drop cookies from 302 redirect responses.
+    // Redirect destination — claim flow goes back to /twin?claimed=1 so the
+    // page can show a personalised welcome message. Regular sign-in goes to
+    // /twin?signedin=1 so the twin page shows the "you're back" greeting.
+    const redirectTo = isClaim ? '/twin?claimed=1' : '/twin?signedin=1';
+
+    // 200 + JS redirect (not 302) — ensures the browser processes Set-Cookie
+    // before following the navigation (some browsers drop cookies on 302).
     const maxAge = 30 * 24 * 60 * 60;
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Set-Cookie', [
@@ -124,14 +185,19 @@ export default async function handler(req, res) {
   <div class="yellow-bar"></div>
   <div class="card">
     <div class="mark" aria-hidden="true"></div>
-    <div class="wordmark">MyAITwin MCP</div>
+    <div class="wordmark">MyAITwin</div>
     <div class="byluto">by Luto</div>
     <p class="msg">Signing you in…</p>
     <p class="sub">Taking you to your Twin.</p>
   </div>
   <script>
+    // Stamp localStorage so the twin page header updates immediately on load.
+    try {
+      localStorage.setItem('mt_is_authenticated', 'true');
+      localStorage.setItem('mt_user_email', ${JSON.stringify(email)});
+    } catch (e) {}
     // Redirect after a tick — gives the browser time to commit the Set-Cookie
-    setTimeout(function() { window.location.href = '/create'; }, 50);
+    setTimeout(function() { window.location.href = '${redirectTo}'; }, 50);
   </script>
 </body>
 </html>`);

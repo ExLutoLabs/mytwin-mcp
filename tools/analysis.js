@@ -13,12 +13,19 @@ export async function findPatternsInKnowledge(ctx, { focus } = {}) {
   //   3. Everything else   — broader knowledge corpus (only if no narrower focus).
   // When the focus param is provided we constrain to that type only (back-compat
   // with the old behaviour). With no focus, we slice each layer and combine them.
+  //
+  // PERSONAL ONLY (v2 brief 2.3): meta-principles are *how the user thinks*
+  // (spec §2 Layer 3, §6.3). Mining employer or client material here would
+  // surface a client's voice as if it were the user's own principle, which is
+  // exactly the trust failure provenance partitioning exists to prevent. So
+  // every slice filters to provenance = 'personal'.
 
   if (focus) {
     const { data, error } = await db.from('knowledge')
       .select('type, title, content, source_type, tags, provenance')
       .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
       .eq('type', focus)
+      .eq('provenance', 'personal')
       .order('created_at', { ascending: false }).limit(100);
     if (error) {
       console.error('[mytwin/supabase] analysis failed:', { message: error.message, code: error.code });
@@ -44,14 +51,17 @@ export async function findPatternsInKnowledge(ctx, { focus } = {}) {
     db.from('knowledge').select('type, title, content, tags, provenance')
       .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
       .eq('type', 'reference-record')
+      .eq('provenance', 'personal')
       .order('created_at', { ascending: false }).limit(50),
     db.from('knowledge').select('type, title, content, tags, provenance')
       .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
       .in('type', ['skill', 'voice', 'template'])
+      .eq('provenance', 'personal')
       .order('created_at', { ascending: false }).limit(50),
     db.from('knowledge').select('type, title, content, tags, provenance')
       .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
       .in('type', ['knowledge', 'principle', 'brand', 'idea', 'resource'])
+      .eq('provenance', 'personal')
       .order('created_at', { ascending: false }).limit(50),
   ]);
 
@@ -90,9 +100,10 @@ export async function findPatternsInKnowledge(ctx, { focus } = {}) {
       skills:            skills?.length || 0,
       knowledge:         knowledge?.length || 0,
     },
+    provenance: 'personal',
     note: strongPatterns.length
-      ? 'Candidate meta-principles — patterns that appear 3 or more times across your reference records, skills, and knowledge. Worth confirming with the user before storing.'
-      : 'No strong (3+ evidence) meta-principles yet. Surface anything from patterns_all softly, with care.',
+      ? 'Candidate meta-principles, mined from the user\'s personal items only (employer and client material excluded, so any principle is genuinely theirs). These appear 3 or more times across their personal reference records, skills, and knowledge. Worth confirming with the user before storing.'
+      : 'No strong (3+ evidence) meta-principles yet from personal items. Surface anything from patterns_all softly, with care.',
   };
 }
 

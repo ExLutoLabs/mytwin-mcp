@@ -135,9 +135,9 @@ function sbError(op, error) {
 
 // ── add_knowledge ─────────────────────────────────────────────────────────────
 
-const VALID_PROVENANCE = new Set(['personal', 'organisational', 'external']);
+const VALID_PROVENANCE = new Set(['personal', 'organisational', 'employer', 'client', 'external']);
 
-export async function addKnowledge(ctx, { type, content, title, source_type = 'typed', source_ref, tags, manual_tags, provenance, precomputed_auto_tags }) {
+export async function addKnowledge(ctx, { type, content, title, source_type = 'typed', source_ref, tags, manual_tags, provenance, precomputed_auto_tags, is_living_document }) {
   if (typeof content !== 'string' || !content.trim()) {
     throw new UserError('Content is required.');
   }
@@ -165,7 +165,7 @@ export async function addKnowledge(ctx, { type, content, title, source_type = 't
 
   const { data, error } = await db
     .from('knowledge')
-    .insert({ user_id: ctx.userId, tenant_id: ctx.tenantId, type, title, content, source_type, source_ref: source_ref || null, tags: allTags, pinecone_id: pid, provenance: prov })
+    .insert({ user_id: ctx.userId, tenant_id: ctx.tenantId, type, title, content, source_type, source_ref: source_ref || null, tags: allTags, pinecone_id: pid, provenance: prov, is_living_document: Boolean(is_living_document) })
     .select()
     .single();
 
@@ -260,48 +260,67 @@ export async function addFromUrl(ctx, { url, notes }) {
 }
 
 // ── add_document ──────────────────────────────────────────────────────────────
+//
+// `type` controls the storage strategy:
+//   - 'skill'     → stored as ONE record (no chunking). Skills are reusable
+//                   writing guides, templates, voice frameworks — they are most
+//                   useful when retrieved whole in creation mode.
+//   - 'knowledge' → chunked for fine-grained retrieval (default).
 
-export async function addDocument(ctx, { filename, content, notes }) {
+export async function addDocument(ctx, { filename, content, notes, type = 'knowledge' }) {
   if (typeof content !== 'string' || !content.trim()) {
     throw new UserError('Document content is required.');
   }
   assertLength('Document', content, MAX_DOCUMENT_CHARS);
 
   const db = getDB();
+  const knowledgeType = type === 'skill' ? 'skill' : 'knowledge';
 
-  // Chunk size bumped 800 → 2500: cuts chunk count ~3× without hurting
-  // retrieval quality (the embedding model handles 2500 chars comfortably).
-  const chunks = chunkText(content, 2500, 100);
-
-  // Single doc-level autoTag pass. autoTag truncates its input to 2000 chars
-  // internally, so handing it the full document gives it the head as the
-  // representative sample. Result is reused across every chunk — kills the
-  // O(N) sequential gpt-4o-mini calls that dominated old ingestion time.
+  // Single doc-level autoTag pass shared across all storage paths.
+  // autoTag truncates to 2000 chars internally — the doc head is the
+  // representative sample. Avoids O(N) sequential gpt-4o-mini calls.
   const docAutoTags = await autoTag(content, []);
 
   const { data: source } = await db.from('sources')
-    .insert({ user_id: ctx.userId, tenant_id: ctx.tenantId, source_type: 'document', reference: filename, item_count: chunks.length })
+    .insert({ user_id: ctx.userId, tenant_id: ctx.tenantId, source_type: 'document', reference: filename, item_count: 0 })
     .select().single();
 
-  // Parallelize chunks in batches of 8. Sequential batches bound the peak
-  // concurrency to ~8 simultaneous embed + insert + upsert pipelines — keeps
-  // us well under any per-provider rate limit while still ~8× faster than
-  // the old serial loop.
-  const BATCH_SIZE = 8;
   const stored = [];
-  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-    const batch = chunks.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(batch.map((chunk, idx) =>
-      addKnowledge(ctx, {
-        type:                  'knowledge',
-        content:               chunk,
-        title:                 chunks.length > 1 ? `${filename} — part ${i + idx + 1}` : filename,
-        source_type:           'document',
-        source_ref:            filename,
-        precomputed_auto_tags: docAutoTags,
-      })
-    ));
-    for (const r of results) stored.push(r.id);
+
+  if (knowledgeType === 'skill') {
+    // Skills are stored as a single whole record so that creation-mode retrieval
+    // always returns the complete content, not a partial excerpt.
+    const result = await addKnowledge(ctx, {
+      type:                  'skill',
+      content,
+      title:                 filename,
+      source_type:           'document',
+      source_ref:            filename,
+      precomputed_auto_tags: docAutoTags,
+    });
+    stored.push(result.id);
+  } else {
+    // Knowledge documents: chunk for fine-grained retrieval.
+    // Chunk size 2500: ~3× fewer chunks than the old 800 without hurting quality.
+    const chunks = chunkText(content, 2500, 100);
+
+    // Parallelize chunks in batches of 8. Sequential batches bound peak
+    // concurrency to ~8 simultaneous embed + insert + upsert pipelines.
+    const BATCH_SIZE = 8;
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(batch.map((chunk, idx) =>
+        addKnowledge(ctx, {
+          type:                  'knowledge',
+          content:               chunk,
+          title:                 chunks.length > 1 ? `${filename} — part ${i + idx + 1}` : filename,
+          source_type:           'document',
+          source_ref:            filename,
+          precomputed_auto_tags: docAutoTags,
+        })
+      ));
+      for (const r of results) stored.push(r.id);
+    }
   }
 
   if (source) await db.from('sources').update({ item_count: stored.length }).eq('id', source.id);

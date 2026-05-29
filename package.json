@@ -8,6 +8,9 @@
   },
   "scripts": {},
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.69.0",
+    "inngest": "^3.0.0",
+    "@deepgram/sdk": "^3.9.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@pinecone-database/pinecone": "^3.0.0",
     "@supabase/supabase-js": "^2.43.0",

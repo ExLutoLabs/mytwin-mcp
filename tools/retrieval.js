@@ -43,7 +43,9 @@ export async function searchTwin(ctx, { query, top_k = 10, type }) {
   if (!results.matches?.length) return { results: [], query, count: 0 };
 
   const ids = results.matches.map(m => m.metadata?.knowledge_id).filter(Boolean);
-  const { data: rows } = await db.from('knowledge').select('*').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId).in('id', ids);
+  let rowQ = db.from('knowledge').select('*').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId).in('id', ids);
+  if (ctx.visibilityFilter === 'sharable') rowQ = rowQ.eq('visibility', 'sharable');
+  const { data: rows } = await rowQ;
 
   const rowMap = {};
   for (const r of rows || []) rowMap[r.id] = r;
@@ -75,13 +77,15 @@ export async function getByType(ctx, { type, limit = 20 }) {
   const db = getDB();
   const lim = Math.max(1, Math.min(Number(limit) || 20, MAX_TYPE_TAG_LIMIT));
 
-  const { data, error } = await db
+  let q = db
     .from('knowledge')
     .select('*')
     .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
     .eq('type', type)
     .order('created_at', { ascending: false })
     .limit(lim);
+  if (ctx.visibilityFilter === 'sharable') q = q.eq('visibility', 'sharable');
+  const { data, error } = await q;
 
   if (error) { console.error('[mytwin/supabase] retrieval failed:', { message: error.message, code: error.code, details: error.details }); throw new Error(error.message); }
 
@@ -104,13 +108,15 @@ export async function getByTag(ctx, { tag, limit = 20 }) {
   const db = getDB();
   const lim = Math.max(1, Math.min(Number(limit) || 20, MAX_TYPE_TAG_LIMIT));
 
-  const { data, error } = await db
+  let q = db
     .from('knowledge')
     .select('*')
     .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
     .contains('tags', [tag.toLowerCase()])
     .order('created_at', { ascending: false })
     .limit(lim);
+  if (ctx.visibilityFilter === 'sharable') q = q.eq('visibility', 'sharable');
+  const { data, error } = await q;
 
   if (error) { console.error('[mytwin/supabase] retrieval failed:', { message: error.message, code: error.code, details: error.details }); throw new Error(error.message); }
 
@@ -139,11 +145,20 @@ export async function getByTag(ctx, { tag, limit = 20 }) {
 // empty, increments the skill_gaps counter for (tenant, output_type); the
 // response carries `skill_gap_threshold_reached: true` once that counter hits
 // 3, so Claude can prompt the user to codify a skill.
+//
+// Fix 4 — Skills are stored whole (no chunking) so that creation mode always
+// gets the full content. If legacy skill chunks exist, we deduplicate by
+// source_ref and return one representative row per source document so the
+// skill body is never truncated.
 
-const SKILL_TYPES     = ['skill', 'voice', 'template'];
+// Skill bucket for creation = personal craft only. Templates are reusable
+// structures, not voice/craft, so they are excluded from the gap-triggering
+// bucket (spec §6, v2 brief 2.1/2.2). Provenance is filtered to personal at
+// the row level so a client's or employer's voice never leaks into "my voice".
+const SKILL_TYPES     = ['skill', 'voice'];
 const KNOWLEDGE_TYPES = ['knowledge', 'principle', 'brand', 'idea', 'resource'];
 
-async function querySliceByType(ctx, query, embedding, knowledgeTypes, topK) {
+async function querySliceByType(ctx, query, embedding, knowledgeTypes, topK, isSkillSlice = false, provenanceFilter = null, returnLimit = null) {
   const db = getDB();
   const results = await getNamespace(ctx.tenantId).query({
     vector: embedding,
@@ -154,13 +169,22 @@ async function querySliceByType(ctx, query, embedding, knowledgeTypes, topK) {
   if (!results.matches?.length) return [];
 
   const ids = results.matches.map(m => m.metadata?.knowledge_id).filter(Boolean);
-  const { data: rows } = await db.from('knowledge').select('*')
+  let rowQ2 = db.from('knowledge').select('*')
     .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId).in('id', ids);
+  if (ctx.visibilityFilter === 'sharable') rowQ2 = rowQ2.eq('visibility', 'sharable');
+  // Provenance partition (spec §4.4, v2 brief 2.2). Filtered on the DB column —
+  // which always has a value (default 'personal') — rather than Pinecone metadata,
+  // which legacy vectors may lack. We over-fetch from Pinecone (topK) and slice to
+  // returnLimit after filtering so personal items are never crowded out.
+  if (Array.isArray(provenanceFilter) && provenanceFilter.length) {
+    rowQ2 = rowQ2.in('provenance', provenanceFilter);
+  }
+  const { data: rows } = await rowQ2;
 
   const rowMap = {};
   for (const r of rows || []) rowMap[r.id] = r;
 
-  return results.matches.map(m => {
+  const matched = results.matches.map(m => {
     const row = rowMap[m.metadata?.knowledge_id];
     if (!row) return null;
     return {
@@ -168,11 +192,27 @@ async function querySliceByType(ctx, query, embedding, knowledgeTypes, topK) {
       type: row.type,
       title: row.title,
       content: row.content,
+      source_ref_key: row.source_ref || row.id,  // used for deduplication below
       tags: row.tags || [],
       ...withSourceAndDate(row),
       relevance: Math.round((m.score || 0) * 100),
     };
   }).filter(Boolean);
+
+  if (!isSkillSlice) return returnLimit ? matched.slice(0, returnLimit) : matched;
+
+  // Fix 4: skills may exist as legacy chunks (same source_ref, multiple rows).
+  // Deduplicate: keep the highest-relevance row per source document. This
+  // guarantees the model always receives a complete skill body, not a fragment.
+  const seen = new Set();
+  const deduped = [];
+  for (const item of matched) {
+    if (seen.has(item.source_ref_key)) continue;
+    seen.add(item.source_ref_key);
+    const { source_ref_key: _drop, ...rest } = item;
+    deduped.push(rest);
+  }
+  return returnLimit ? deduped.slice(0, returnLimit) : deduped;
 }
 
 export async function searchForCreation(ctx, { query, output_type }) {
@@ -182,8 +222,10 @@ export async function searchForCreation(ctx, { query, output_type }) {
   const embedding = await embed(query);
 
   const [skills, knowledge] = await Promise.all([
-    querySliceByType(ctx, query, embedding, SKILL_TYPES,     3),
-    querySliceByType(ctx, query, embedding, KNOWLEDGE_TYPES, 5),
+    // Over-fetch (12) then keep the top 3 personal skill/voice items after the
+    // provenance filter, so a personal skill is never crowded out by client work.
+    querySliceByType(ctx, query, embedding, SKILL_TYPES,     12, true,  ['personal'], 3),
+    querySliceByType(ctx, query, embedding, KNOWLEDGE_TYPES,  5, false, null,         null),
   ]);
 
   // Skill-gap detection: zero skill hits AND we know what output_type
@@ -265,11 +307,11 @@ export async function synthesise(ctx, { topic, top_k = 10, type }) {
   // synthesise needs the actual content though, so we read it once per item
   // here — capped at MAX_SYNTHESIS_CONTENT chars to keep the prompt under budget.
   const _idsForSyn = searchResult.results.map(r => r.id).filter(Boolean);
-  const { data: _synRows } = _idsForSyn.length
-    ? await getDB().from('knowledge').select('id, content')
-        .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
-        .in('id', _idsForSyn)
-    : { data: [] };
+  let _synQ = getDB().from('knowledge').select('id, content')
+    .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
+    .in('id', _idsForSyn);
+  if (ctx.visibilityFilter === 'sharable') _synQ = _synQ.eq('visibility', 'sharable');
+  const { data: _synRows } = _idsForSyn.length ? await _synQ : { data: [] };
   const _contentById = {};
   for (const r of (_synRows || [])) _contentById[r.id] = r.content || '';
 
@@ -322,9 +364,12 @@ function formatSource(row) {
 // to use it verbatim so bare UUIDs never reach the user.
 function withSourceAndDate(row) {
   return {
-    source_ref:  formatSource(row),
-    created_at:  row?.created_at || 'source not recorded',
-    provenance:  row?.provenance || 'personal',
-    display_ref: formatDisplayRef({ id: row?.id, title: row?.title }),
+    source_ref:          formatSource(row),
+    created_at:          row?.created_at || 'source not recorded',
+    updated_at:          row?.updated_at  || row?.created_at || null,
+    provenance:          row?.provenance  || 'personal',
+    display_ref:         formatDisplayRef({ id: row?.id, title: row?.title }),
+    version_number:      row?.version_number      || 1,
+    is_living_document:  row?.is_living_document  || false,
   };
 }

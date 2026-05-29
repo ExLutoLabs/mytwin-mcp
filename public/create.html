@@ -532,6 +532,73 @@ The first item is useful. The hundredth is indispensable.</pre>
 
       </section>
 
+      <!-- ── SECTION 5: SHARED TWIN ──────────────────────────────────────── -->
+      <section id="shared-twin-section" style="padding: 0 0 48px; border-top: 1px solid #E8E2D4; margin-top: 48px; padding-top: 48px;">
+
+        <!-- Section label -->
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#857C6E;margin-bottom:16px;">
+          SHARED TWIN
+        </div>
+
+        <!-- Headline -->
+        <h2 style="font-family:'Source Serif 4',Georgia,serif;font-size:1.5rem;font-weight:500;letter-spacing:-0.02em;color:#0F0E0D;margin:0 0 12px;">
+          Share selected knowledge with anyone.
+        </h2>
+
+        <!-- Body -->
+        <p style="font-family:Inter,sans-serif;font-size:14px;color:#3A352E;line-height:1.6;margin:0 0 24px;max-width:560px;">
+          Generate a read-only MCP link. Only items you've marked <strong>Sharable</strong> in your library are exposed — everything else stays private. The link works in Claude Desktop as a custom connector.
+        </p>
+
+        <!-- Loading state -->
+        <div id="shared-token-loading" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#857C6E;padding:16px 0;">Loading…</div>
+
+        <!-- No token — generate section -->
+        <div id="shared-token-none" style="display:none;">
+          <button onclick="generateSharedToken()" id="shared-generate-btn"
+            style="padding:10px 20px;background:#FFE34A;border:1.5px solid #0F0E0D;border-radius:8px;box-shadow:2px 2px 0 #0F0E0D;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#0F0E0D;cursor:pointer;transition:all 150ms;"
+            onmouseover="this.style.boxShadow='none';this.style.transform='translate(2px,2px)'"
+            onmouseout="this.style.boxShadow='2px 2px 0 #0F0E0D';this.style.transform='none'">
+            Generate shared link
+          </button>
+          <p style="font-family:Inter,sans-serif;font-size:13px;color:#857C6E;margin:10px 0 0;line-height:1.5;">No shared link yet. Generate one to share your knowledge.</p>
+        </div>
+
+        <!-- Fresh token — shown once after generation -->
+        <div id="shared-token-fresh" style="display:none;background:#FFE34A;border:1.5px solid #0F0E0D;border-radius:12px;box-shadow:4px 4px 0 #0F0E0D;padding:20px 24px;">
+          <p style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;color:#0F0E0D;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.04em;">Save this URL now — you won't see it again.</p>
+          <p style="font-family:Inter,sans-serif;font-size:13px;color:#3A352E;line-height:1.5;margin:0 0 14px;">Share it as a custom MCP connector. Anyone with this URL gets read-only access to your sharable items.</p>
+          <div style="display:flex;gap:8px;align-items:stretch;">
+            <div id="shared-url-value" style="flex:1;background:#0F0E0D;border-radius:8px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#FDFCFA;overflow-x:auto;white-space:nowrap;"></div>
+            <button onclick="copySharedUrl()" id="shared-copy-btn"
+              style="padding:12px 18px;background:#FDFCFA;border:1.5px solid #0F0E0D;border-radius:8px;box-shadow:2px 2px 0 #0F0E0D;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#0F0E0D;cursor:pointer;white-space:nowrap;"
+              onmouseover="this.style.boxShadow='none';this.style.transform='translate(2px,2px)'"
+              onmouseout="this.style.boxShadow='2px 2px 0 #0F0E0D';this.style.transform='none'">COPY</button>
+          </div>
+        </div>
+
+        <!-- Existing token — masked -->
+        <div id="shared-token-existing" style="display:none;background:#F9F8F4;border:1px solid #E8E2D4;border-radius:12px;padding:20px 24px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3A352E;margin-bottom:10px;">
+            <span id="shared-token-prefix" style="color:#0F0E0D;font-weight:600;"></span><span style="color:#857C6E;">••••••••••••••••••••••••</span>
+          </div>
+          <p style="font-family:Inter,sans-serif;font-size:13px;color:#857C6E;margin:0 0 14px;line-height:1.5;">Shared link is active. We can't show it again. Mark items as Sharable in your <a href="/twin/library" style="color:#0F0E0D;text-decoration:underline;">library</a> to expose them.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="generateSharedToken(true)" id="shared-regen-btn"
+              style="padding:8px 16px;background:#FDFCFA;border:1.5px solid #0F0E0D;border-radius:8px;box-shadow:2px 2px 0 #0F0E0D;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#0F0E0D;cursor:pointer;transition:all 150ms;"
+              onmouseover="this.style.boxShadow='none';this.style.transform='translate(2px,2px)'"
+              onmouseout="this.style.boxShadow='2px 2px 0 #0F0E0D';this.style.transform='none'">REGENERATE</button>
+            <button onclick="revokeSharedToken()" id="shared-revoke-btn"
+              style="padding:8px 16px;background:#FDFCFA;border:1.5px solid #E8E2D4;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#857C6E;cursor:pointer;transition:all 150ms;"
+              onmouseover="this.style.borderColor='#0F0E0D';this.style.color='#0F0E0D'"
+              onmouseout="this.style.borderColor='#E8E2D4';this.style.color='#857C6E'">REVOKE</button>
+          </div>
+        </div>
+
+        <p id="shared-token-msg" style="font-family:Inter,sans-serif;font-size:13px;color:#3A352E;margin:12px 0 0;line-height:1.5;min-height:18px;"></p>
+
+      </section>
+
       <!-- ── DANGER ZONE: account deletion ──────────────────────────────── -->
       <section style="padding: 64px 0 48px; border-top: 1px solid #E8E2D4; margin-top: 48px;">
         <details>
@@ -745,6 +812,7 @@ The first item is useful. The hundredth is indispensable.</pre>
     }
 
     loadMcpUrl();
+    loadSharedToken();
 
     // ── Copy functions ──
     function copyPrompt() {
@@ -776,6 +844,101 @@ The first item is useful. The hundredth is indispensable.</pre>
       const btn = document.getElementById('copy-instructions-btn');
       btn.textContent = 'COPIED ✓';
       setTimeout(() => btn.textContent = 'COPY INSTRUCTIONS', 2000);
+    }
+
+    // ── Shared twin token ──────────────────────────────────────────────────
+
+    async function loadSharedToken() {
+      try {
+        const res = await fetch('/api/dashboard/shared-token');
+        if (res.status === 401) return; // not signed in — section stays hidden
+        const data = await res.json();
+        renderSharedTokenSection(data);
+      } catch (e) {
+        document.getElementById('shared-token-loading').textContent = '';
+      }
+    }
+
+    function renderSharedTokenSection(data) {
+      const loading  = document.getElementById('shared-token-loading');
+      const none     = document.getElementById('shared-token-none');
+      const fresh    = document.getElementById('shared-token-fresh');
+      const existing = document.getElementById('shared-token-existing');
+      loading.style.display = 'none';
+
+      if (!data.exists) {
+        none.style.display = 'block';
+        fresh.style.display = 'none';
+        existing.style.display = 'none';
+      } else {
+        none.style.display = 'none';
+        fresh.style.display = 'none';
+        existing.style.display = 'block';
+        const prefix = data.prefix || '';
+        document.getElementById('shared-token-prefix').textContent = prefix;
+      }
+    }
+
+    async function generateSharedToken(isRegen = false) {
+      const btn = isRegen
+        ? document.getElementById('shared-regen-btn')
+        : document.getElementById('shared-generate-btn');
+      const msg = document.getElementById('shared-token-msg');
+      if (isRegen) {
+        const ok = window.confirm('Regenerate your shared link? The current link will stop working immediately.');
+        if (!ok) return;
+      }
+      if (btn) { btn.disabled = true; btn.textContent = 'GENERATING…'; }
+      msg.textContent = '';
+      try {
+        const res = await fetch('/api/dashboard/shared-token', { method: 'POST' });
+        if (!res.ok) throw new Error('Could not generate');
+        const data = await res.json();
+        // Hide all states, show fresh
+        document.getElementById('shared-token-none').style.display = 'none';
+        document.getElementById('shared-token-existing').style.display = 'none';
+        document.getElementById('shared-token-loading').style.display = 'none';
+        const fresh = document.getElementById('shared-token-fresh');
+        fresh.style.display = 'block';
+        document.getElementById('shared-url-value').textContent = data.sharedUrl;
+      } catch (e) {
+        msg.style.color = '#FF5A3C';
+        msg.textContent = 'Could not generate. Try again.';
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = isRegen ? 'REGENERATE' : 'Generate shared link'; }
+      }
+    }
+
+    async function revokeSharedToken() {
+      const btn = document.getElementById('shared-revoke-btn');
+      const msg = document.getElementById('shared-token-msg');
+      const ok = window.confirm('Revoke the shared link? Anyone using it will immediately lose access.');
+      if (!ok) return;
+      btn.disabled = true;
+      btn.textContent = 'REVOKING…';
+      msg.textContent = '';
+      try {
+        const res = await fetch('/api/dashboard/shared-token', { method: 'DELETE' });
+        if (!res.ok) throw new Error('Could not revoke');
+        document.getElementById('shared-token-existing').style.display = 'none';
+        document.getElementById('shared-token-none').style.display = 'block';
+        msg.style.color = '#3A352E';
+        msg.textContent = 'Shared link revoked.';
+      } catch (e) {
+        msg.style.color = '#FF5A3C';
+        msg.textContent = 'Could not revoke. Try again.';
+        btn.disabled = false;
+        btn.textContent = 'REVOKE';
+      }
+    }
+
+    function copySharedUrl() {
+      const url = document.getElementById('shared-url-value').textContent.trim();
+      if (!url) return;
+      navigator.clipboard.writeText(url);
+      const btn = document.getElementById('shared-copy-btn');
+      btn.textContent = 'COPIED ✓';
+      setTimeout(() => btn.textContent = 'COPY', 2000);
     }
 
   </script>

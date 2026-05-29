@@ -31,43 +31,100 @@ a thought, a hello, whatever comes to mind — and
 we will search for it together so you can see
 everything working.`;
 
-const WELCOME_RETURNING = (count, types, recentTitle, recentType, recentDate) =>
-`Welcome back. Your twin has ${count} item${count === 1 ? '' : 's'} stored across ${types} knowledge type${types === 1 ? '' : 's'}.
+// ── Proactive opener ──────────────────────────────────────────────────────────
+// The moat is the twin doing something *before* the user asks (v2 brief Phase 3).
+// buildOpener surfaces the single most valuable thing from existing data on
+// session open: a drafted skill waiting, a recurring gap, or the user's most
+// recent thread. Deterministic and cheap — no LLM call. Shared by the
+// get_welcome MCP tool and the /twin web chat opening so both surfaces behave
+// the same way.
 
-Most recent: ${recentTitle}, ${recentType}, ${recentDate}.
+function humanise(slug) {
+  return String(slug || '').replace(/[-_]+/g, ' ').trim();
+}
 
-Everything you add is completely yours and available in every Claude chat you open.`;
+function formatDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch { return 'recently'; }
+}
+
+export async function buildOpener(ctx) {
+  const db = getDB();
+
+  const [recentRes, typesRes, proposalRes, gapRes] = await Promise.allSettled([
+    db.from('knowledge').select('id, title, type, created_at', { count: 'exact' })
+      .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: false }).limit(1),
+    db.from('schema_types').select('name')
+      .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId),
+    db.from('skill_proposals').select('id, title, description')
+      .eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId)
+      .eq('status', 'pending').order('created_at', { ascending: false }).limit(1),
+    db.from('skill_gaps').select('output_type, count, last_seen')
+      .eq('tenant_id', ctx.tenantId)
+      .order('count', { ascending: false }).limit(1),
+  ]);
+
+  const recentRow = recentRes.status === 'fulfilled' ? (recentRes.value.data?.[0] || null) : null;
+  const total     = recentRes.status === 'fulfilled' ? (recentRes.value.count ?? (recentRow ? 1 : 0)) : 0;
+  const typeCount = typesRes.status === 'fulfilled' ? (typesRes.value.data?.length || 0) : 0;
+  const proposal  = proposalRes.status === 'fulfilled' ? (proposalRes.value.data?.[0] || null) : null;
+  const gap       = gapRes.status === 'fulfilled' ? (gapRes.value.data?.[0] || null) : null;
+
+  // Priority order: a drafted skill waiting > a recurring gap > the recent thread.
+  let kind = 'recent';
+  let line;
+
+  if (total === 0) {
+    kind = 'new';
+    line = null;
+  } else if (proposal) {
+    kind = 'skill_proposal';
+    line = `While you were gone I drafted a skill from your recent work: "${proposal.title}". Want to look at it, or leave it for later?`;
+  } else if (gap && Number(gap.count) >= 2) {
+    kind = 'skill_gap';
+    line = `You've come to me for ${humanise(gap.output_type)} ${gap.count} times now, and there's still no skill for it. Worth codifying one so the next one starts from a better place?`;
+  } else if (recentRow) {
+    kind = 'recent';
+    line = `Last thing you added was "${recentRow.title || 'untitled'}" (${recentRow.type}, ${formatDate(recentRow.created_at)}). Want to build on it, or start something new?`;
+  }
+
+  return { kind, line, total, typeCount };
+}
 
 // ── get_welcome ───────────────────────────────────────────────────────────────
 
 export async function getWelcome(ctx) {
-  const db = getDB();
-
-  const [{ data: knowledge }, { data: types }] = await Promise.all([
-    db.from('knowledge').select('id, title, type, created_at').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId).order('created_at', { ascending: false }),
-    db.from('schema_types').select('name').eq('user_id', ctx.userId).eq('tenant_id', ctx.tenantId),
-  ]);
-
-  const total     = (knowledge || []).length;
-  const typeCount = (types || []).length;
-
-  const text = total === 0
-    ? WELCOME_NEW
-    : WELCOME_RETURNING(
-        total,
-        typeCount,
-        knowledge[0].title || 'untitled',
-        knowledge[0].type,
-        new Date(knowledge[0].created_at).toLocaleDateString('en-GB', {
-          day: 'numeric', month: 'long', year: 'numeric',
-        })
-      );
+  const opener = await buildOpener(ctx);
+  const isNew  = opener.total === 0;
 
   // The response is composed of two parts Claude reads in order:
   //   1. SYSTEM PROMPT — operating instructions Claude internalises and
   //      follows throughout the session. NOT displayed to the user.
-  //   2. WELCOME MESSAGE — printed to the user verbatim, exactly once.
-  // Section markers are explicit so Claude doesn't conflate the two.
+  //   2. SESSION OPENER — what the twin opens with. NOT locked to verbatim:
+  //      the twin opens proactively, in voice, then continues naturally.
+  const openerSection = isNew
+    ? [
+        'SESSION OPENER — this user is new. Welcome them warmly, in your own',
+        'voice, drawing on the spirit of the message below. Keep it close to',
+        'this in substance; do not bury it under extra text. Then invite their',
+        'first capture.',
+        '════════════════════════════════════════════════════════════',
+        '',
+        WELCOME_NEW,
+      ]
+    : [
+        'SESSION OPENER — open the session by surfacing the specific thing below,',
+        'in your own voice (warm, brief, no em dashes). This is the moat: you are',
+        'showing the user something useful before they asked. Keep the specific',
+        'fact it carries. After the opener, continue the conversation naturally —',
+        'you may propose, ask a question, or offer a next step.',
+        '════════════════════════════════════════════════════════════',
+        '',
+        opener.line,
+      ];
+
   const content = [
     '════════════════════════════════════════════════════════════',
     'SYSTEM PROMPT — operating instructions for this MyAITwin session.',
@@ -78,23 +135,13 @@ export async function getWelcome(ctx) {
     SYSTEM_PROMPT,
     '',
     '════════════════════════════════════════════════════════════',
-    'WELCOME MESSAGE — output the following to the user word for word,',
-    'exactly as below. Do not rewrite, summarise, paraphrase, or add',
-    'commentary. Do not add anything before or after.',
-    '════════════════════════════════════════════════════════════',
-    '',
-    text,
-    '',
-    '════════════════════════════════════════════════════════════',
-    'After outputting the welcome message above, stop completely.',
-    'Do not propose schema types, do not ask questions, do not offer',
-    'suggestions. Wait for the user to respond.',
-    '════════════════════════════════════════════════════════════',
+    ...openerSection,
   ].join('\n');
 
   return {
     content,
-    is_new: total === 0,
+    is_new: isNew,
+    opener,
   };
 }
 
@@ -130,7 +177,7 @@ This Claude session has access to a personal knowledge twin via MyAITwin MCP.
 ${typeLines || '(no types yet)'}
 
 ## Rules — follow these exactly
-- RULE: When get_welcome returns a message, output it to the user word for word. Do not rewrite, improve, summarise, or add to it. Do not add commentary before or after. The welcome message is final — output it verbatim and nothing else.
+- RULE: get_welcome returns a SYSTEM PROMPT section (never shown to the user) and a SESSION OPENER section. Open the session with the opener in your own voice, warm and brief, keeping the specific fact it surfaces. Then continue naturally — you may propose, ask, or offer a next step.
 - When the user asks anything that could be answered from their twin, search it first using search_twin
 - When storing knowledge, always confirm what was stored and cite the source
 - Every retrieval and synthesis response must cite the source

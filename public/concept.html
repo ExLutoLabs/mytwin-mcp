@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concept · Library · MyAITwin</title>
+<meta name="robots" content="noindex,follow">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper:   #FBFAF7;
+  --paper-2: #F5F4F1;
+  --paper-3: #EDEAE2;
+  --ink:     #0F0E0D;
+  --ink-2:   #3A352E;
+  --muted:   #6B6760;
+  --line:    #EDEAE2;
+  --yellow:  #FFE34A;
+  --coral:   #FF5A3C;
+  --mint:    #B8E5C8;
+  --sky:     #C8DCF0;
+  --lilac:   #E0D1F0;
+  --shadow-brutal: 3px 3px 0 var(--ink);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--ink); outline-offset: 2px;
+}
+
+/* ── Masthead ──────────────────────────────────────────────────────────── */
+header.site-header {
+  position: sticky; top: 0; z-index: 30;
+  border-bottom: 1px solid var(--line);
+  background: rgba(251, 250, 247, 0.92);
+  backdrop-filter: blur(8px);
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 12px 32px;
+  display: flex; align-items: center; gap: 24px;
+}
+.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+.logo-mark {
+  position: relative; display: inline-block;
+  width: 22px; height: 22px; flex-shrink: 0;
+}
+.logo-mark::before {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px; border-radius: 3px;
+  background: var(--ink); opacity: 0.32;
+}
+.logo-mark::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 20px; height: 20px; border-radius: 3px;
+  background: var(--yellow); border: 1.5px solid var(--ink);
+}
+.logo-text { display: flex; flex-direction: column; gap: 1px; }
+.logo-name {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 1.05rem; font-weight: 500; letter-spacing: -0.01em;
+  line-height: 1.1; color: var(--ink);
+}
+.logo-by {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.2em; color: var(--muted); line-height: 1;
+}
+.site-nav {
+  display: flex; align-items: center; gap: 4px; flex: 1;
+}
+.nav-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--muted);
+  text-decoration: none; padding: 5px 10px; border-radius: 6px;
+  transition: color 120ms, background 120ms;
+}
+.nav-link:hover { color: var(--ink); background: var(--paper-2); }
+.nav-link.active { color: var(--ink); background: var(--paper-3); }
+.header-right {
+  display: flex; align-items: center; gap: 12px; margin-left: auto;
+}
+.signin-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted);
+  text-decoration: none; padding: 6px 10px;
+  transition: color 150ms;
+}
+.signin-link:hover { color: var(--ink); }
+
+/* ── Loading ───────────────────────────────────────────────────────────── */
+#view-loading {
+  max-width: 760px; margin: 0 auto;
+  padding: 80px 32px;
+  display: flex; align-items: center; justify-content: center;
+}
+.loading-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.18em; color: var(--muted);
+}
+
+/* ── Main content ──────────────────────────────────────────────────────── */
+#view-concept {
+  max-width: 760px; margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+/* ── Breadcrumb ────────────────────────────────────────────────────────── */
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--muted);
+  margin-bottom: 28px;
+}
+.breadcrumb a { text-decoration: none; color: var(--muted); transition: color 120ms; }
+.breadcrumb a:hover { color: var(--ink); }
+.bc-sep { color: var(--line); }
+.bc-current { color: var(--ink); }
+
+/* ── Concept header ────────────────────────────────────────────────────── */
+.concept-flavour-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.14em;
+  border: 1.5px solid var(--ink); padding: 3px 10px; border-radius: 4px;
+  margin-bottom: 14px;
+}
+.concept-flavour-pill.knowledge { background: var(--sky); }
+.concept-flavour-pill.skills    { background: var(--coral); color: #fff; border-color: var(--coral); }
+
+.concept-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: clamp(26px, 4vw, 42px); font-weight: 500;
+  line-height: 1.08; letter-spacing: -0.022em; margin-bottom: 16px;
+}
+
+.concept-summary {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 19px; font-style: italic; color: var(--muted);
+  line-height: 1.5; letter-spacing: -0.005em;
+  max-width: 640px; margin-bottom: 20px;
+}
+
+.concept-meta-row {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); line-height: 1.7;
+  padding: 14px 0;
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 36px;
+}
+
+/* ── Concept content ───────────────────────────────────────────────────── */
+.concept-content {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 17px; line-height: 1.7; color: var(--ink);
+  margin-bottom: 48px;
+}
+.concept-content p { margin: 0 0 18px; }
+.concept-content p:last-child { margin: 0; }
+.concept-content h1, .concept-content h2, .concept-content h3 {
+  font-family: 'Source Serif 4', Georgia, serif; font-weight: 500;
+  letter-spacing: -0.015em; margin: 28px 0 10px; line-height: 1.2;
+}
+.concept-content h1 { font-size: 1.5rem; }
+.concept-content h2 { font-size: 1.25rem; }
+.concept-content h3 { font-size: 1.05rem; }
+.concept-content ul, .concept-content ol { margin: 10px 0 18px; padding-left: 26px; }
+.concept-content li { margin: 6px 0; }
+.concept-content strong { font-weight: 600; }
+.concept-content em { font-style: italic; }
+.concept-content a {
+  color: var(--ink); text-decoration: underline;
+  text-decoration-thickness: 1.5px; text-underline-offset: 3px;
+}
+.concept-content code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85em;
+  background: var(--paper-2); border: 1px solid var(--line);
+  padding: 1px 5px; border-radius: 3px;
+}
+.concept-content pre {
+  background: var(--paper-2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 14px 16px; overflow-x: auto; margin: 14px 0;
+  font-size: 13px; line-height: 1.5;
+}
+.concept-content pre code { background: none; border: none; padding: 0; font-size: inherit; }
+.concept-content blockquote {
+  margin: 16px 0; padding: 10px 18px;
+  border-left: 3px solid var(--sky); background: var(--paper-2);
+  border-radius: 0 6px 6px 0; font-style: italic; color: var(--ink-2);
+}
+.concept-content hr { border: none; border-top: 1px solid var(--line); margin: 24px 0; }
+
+/* ── Source items ──────────────────────────────────────────────────────── */
+.sources-section {
+  border-top: 1.5px solid var(--ink);
+  padding-top: 28px;
+  margin-bottom: 48px;
+}
+.sources-heading {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.22em; margin-bottom: 18px;
+}
+.source-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+  text-decoration: none; display: block;
+}
+.source-item:hover {
+  border-color: var(--ink);
+  background: var(--paper-2);
+}
+.source-item-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 5px;
+}
+.source-item-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--muted);
+}
+.source-item-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 15px; font-weight: 500; color: var(--ink);
+}
+.source-item-snippet {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 13px; font-style: italic; color: var(--muted);
+  line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.source-item-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.08em; color: var(--muted);
+  margin-top: 8px;
+}
+
+/* ── Back link ─────────────────────────────────────────────────────────── */
+.back-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--muted); text-decoration: none;
+  transition: color 120ms;
+}
+.back-link:hover { color: var(--ink); }
+
+.error-msg {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 16px; font-style: italic; color: var(--muted);
+  padding: 40px 0;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .header-inner { padding: 10px 16px; gap: 12px; }
+  #view-concept { padding: 32px 16px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Masthead ─────────────────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <span class="logo-mark"></span>
+      <span class="logo-text">
+        <span class="logo-name">MyAITwin</span>
+        <span class="logo-by">by Luto</span>
+      </span>
+    </a>
+    <nav class="site-nav">
+      <a href="/twin" class="nav-link">Chat</a>
+      <a href="/twin/library" class="nav-link active">Library</a>
+    </nav>
+    <div class="header-right">
+      <a href="/create" class="signin-link">Sign in</a>
+    </div>
+  </div>
+</header>
+
+<!-- ── Loading ──────────────────────────────────────────────────────────── -->
+<div id="view-loading">
+  <p class="loading-text">Loading…</p>
+</div>
+
+<!-- ── Concept detail ────────────────────────────────────────────────────── -->
+<main id="view-concept" hidden>
+  <nav class="breadcrumb">
+    <a href="/twin/library">Library</a>
+    <span class="bc-sep">/</span>
+    <span id="bc-flavour"></span>
+    <span class="bc-sep">/</span>
+    <span class="bc-current" id="bc-title"></span>
+  </nav>
+
+  <div id="concept-flavour-pill" class="concept-flavour-pill"></div>
+  <h1 class="concept-title" id="concept-title"></h1>
+  <p class="concept-summary" id="concept-summary"></p>
+  <div class="concept-meta-row" id="concept-meta-row"></div>
+
+  <div class="concept-content" id="concept-content"></div>
+
+  <div class="sources-section" id="sources-section" hidden>
+    <p class="sources-heading">Source items</p>
+    <div id="sources-list"></div>
+  </div>
+
+  <a href="/twin/library" class="back-link">← Back to library</a>
+</main>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'mt_anon_token';
+let token = null;
+
+function eid(id) { return document.getElementById(id); }
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls)  e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function shortDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function relativeTime(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = 60000, hr = 3600000, day = 86400000, wk = 604800000, mo = 2592000000;
+  if (diff < min)       return 'just now';
+  if (diff < hr)        return Math.floor(diff / min) + 'm ago';
+  if (diff < day)       return Math.floor(diff / hr) + 'h ago';
+  if (diff < 2 * day)   return 'yesterday';
+  if (diff < wk)        return Math.floor(diff / day) + ' days ago';
+  if (diff < 2 * wk)    return '1 week ago';
+  if (diff < mo)        return Math.floor(diff / wk) + ' weeks ago';
+  return Math.floor(diff / mo) + ' months ago';
+}
+
+function snippetText(content, max) {
+  max = max || 120;
+  return String(content || '')
+    .replace(/\\(.)/g, '$1')
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*{1,2}([^*\n]*)\*{1,2}/g, '$1')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\s{2,}/g, ' ').replace(/\n+/g, ' ').trim()
+    .slice(0, max) || '—';
+}
+
+const TYPE_LABEL = {
+  principle: 'Principle', 'meta-principle': 'Meta-Principle',
+  skill: 'Skill',  voice: 'Voice',  idea: 'Idea',  resource: 'Resource',
+  knowledge: 'Knowledge', template: 'Template', brand: 'Brand',
+  reflection: 'Reflection', 'reference-record': 'Reference', observation: 'Observation',
+};
+function typeLabel(t) { return TYPE_LABEL[t] || (t ? t[0].toUpperCase() + t.slice(1) : 'Item'); }
+
+function renderMarkdown(text) {
+  if (!window.marked || !window.DOMPurify) {
+    return '<p>' + String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>') + '</p>';
+  }
+  const cleaned = String(text || '').replace(/\\(.)/g, '$1');
+  const raw = marked.parse(cleaned);
+  return DOMPurify.sanitize(raw, {
+    ALLOWED_TAGS: ['p','br','strong','em','b','i','a','code','pre','blockquote',
+                   'ul','ol','li','h1','h2','h3','h4','h5','h6','hr',
+                   'table','thead','tbody','tr','th','td'],
+    ALLOWED_ATTR: ['href','title','target','rel'],
+  }).replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
+}
+
+async function api(path) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['X-Anon-Token'] = token;
+  const res = await fetch(path, { headers });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body.error || 'HTTP ' + res.status);
+    err.status = res.status;
+    throw err;
+  }
+  return body;
+}
+
+function conceptIdFromPath() {
+  // Path: /twin/library/concept/<id>
+  const parts = location.pathname.split('/');
+  return parts[parts.length - 1] || null;
+}
+
+function renderConcept(concept, sourceItems) {
+  document.title = concept.title + ' · Library · MyAITwin';
+
+  const flavourLabel = concept.flavour === 'knowledge' ? 'Knowledge' : 'Skills';
+  const flavourShort = concept.flavour === 'knowledge' ? 'Knowledge' : 'Skills';
+
+  // Breadcrumb
+  eid('bc-flavour').textContent = flavourShort;
+  eid('bc-title').textContent   = concept.title.slice(0, 50) + (concept.title.length > 50 ? '…' : '');
+
+  // Flavour pill
+  const pill = eid('concept-flavour-pill');
+  pill.textContent = flavourLabel + '  ·  v' + concept.version;
+  pill.className = 'concept-flavour-pill ' + concept.flavour;
+
+  // Title + summary
+  eid('concept-title').textContent   = concept.title;
+  eid('concept-summary').textContent = concept.summary;
+
+  // Meta row
+  const srcCount = (concept.source_ids || []).length;
+  eid('concept-meta-row').textContent = [
+    'Updated ' + shortDate(concept.updated_at),
+    srcCount + ' source item' + (srcCount !== 1 ? 's' : ''),
+    'Version ' + concept.version,
+  ].join('  ·  ');
+
+  // Body content
+  eid('concept-content').innerHTML = renderMarkdown(concept.content || '');
+
+  // Source items
+  if (sourceItems && sourceItems.length > 0) {
+    const list = eid('sources-list');
+    list.innerHTML = '';
+    sourceItems.forEach(item => {
+      const a = document.createElement('a');
+      a.className = 'source-item';
+      a.href = '/twin/library?id=' + item.id;
+
+      const head = el('div', 'source-item-head');
+      head.appendChild(el('span', 'source-item-type', typeLabel(item.type)));
+      a.appendChild(head);
+
+      const title = item.title
+        ? item.title
+        : String(item.content || '').split('\n')[0].replace(/^#{1,6}\s*/, '').trim().slice(0, 70) || 'Untitled';
+      a.appendChild(el('p', 'source-item-title', title));
+      a.appendChild(el('p', 'source-item-snippet', snippetText(item.content, 160)));
+      a.appendChild(el('p', 'source-item-date', shortDate(item.created_at)));
+
+      list.appendChild(a);
+    });
+    eid('sources-section').hidden = false;
+  }
+}
+
+async function loadConcept(id) {
+  try {
+    const { concept, source_items } = await api('/api/library/concepts/' + encodeURIComponent(id));
+    renderConcept(concept, source_items);
+    eid('view-loading').hidden = true;
+    eid('view-concept').hidden = false;
+  } catch (err) {
+    eid('view-loading').hidden = true;
+    eid('view-concept').hidden = false;
+    const msg = err.status === 404 ? 'Concept not found.' : 'Failed to load concept. Try refreshing.';
+    eid('concept-content').innerHTML = '<p class="error-msg">' + msg + '</p>';
+  }
+}
+
+(function init() {
+  token = localStorage.getItem(STORAGE_KEY);
+  if (!token) {
+    location.replace('/twin');
+    return;
+  }
+  if (window.marked) {
+    marked.setOptions({ gfm: true, breaks: false });
+  }
+  const id = conceptIdFromPath();
+  if (!id) {
+    location.replace('/twin/library');
+    return;
+  }
+  loadConcept(id);
+})();
+</script>
+</body>
+</html>
