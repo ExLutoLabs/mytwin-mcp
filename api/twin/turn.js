@@ -59,13 +59,14 @@ function chatInstruction({ mode, hasResults, hasSkill, skillGap, today, stage, s
       '',
       'CREATION MODE (spec §4.4):',
       'The user is asking you to help create something. Dual retrieval has already happened: a skills bucket (their writing voice, style, frameworks) and a knowledge bucket (the relevant material). Both are in <skills_bucket> and <knowledge_bucket> below.',
+      'Before writing a single word, read the skills bucket fully, then the knowledge bucket. Assemble both. Then write. Do not grab material piecemeal while composing.',
       hasSkill
-        ? 'BEFORE producing the output, write a single short line stating what you drew on. Example: "Pulling your LinkedIn voice from March and your meeting notes from this week."'
-        : 'No matching skill exists yet. Note that briefly. Example: "No specific skill stored for this yet. Worth codifying once we get it right." Then produce the output using their stored knowledge and your best read of their voice from what is in front of you.',
-      'Then produce the output. Use their words and frames where possible. Cite each item inline using its number in square brackets, like [1] or [2].',
+        ? 'A skill is present. Before producing the output, write one short line stating what you drew on. Example: "Pulling your LinkedIn voice from March and your meeting notes from this week." The output should sound like them, grounded in that skill.'
+        : 'No matching skill exists yet. Be honest about it: say "No specific skill stored for this yet. This is a capable draft, not your established voice. Worth codifying once we get it right." Then produce the output using their stored knowledge. Do not imply the output sounds like them when it was improvised.',
+      'Cite each item inline using its number in square brackets, like [1] or [2].',
       'Anti-AI-soup: extract their original work, do not generate generic synthesis on top of it. Connective tissue only.',
       skillGap?.skill_gap_threshold_reached
-        ? `END WITH: a single sentence noting they've asked for this output type ${skillGap.count} times now. Phrase like the spec: "Worth building a skill so the next one starts from a better place?" — keep it light, do not nag.`
+        ? `END WITH: a single sentence noting they've asked for this output type ${skillGap.count} times now. Phrase like the spec: "Worth building a skill so the next one starts from a better place?" Keep it light, do not nag.`
         : ''
     );
   } else if (mode === 'browse') {
