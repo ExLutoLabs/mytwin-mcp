@@ -1315,7 +1315,10 @@ function renderStats(stats) {
   eid('meta-most-used').textContent     = stats.mostUsedType ? typeLabel(stats.mostUsedType.type) : '—';
   eid('meta-most-used-count').textContent = stats.mostUsedType ? stats.mostUsedType.count + ' items' : '';
   eid('meta-tags').textContent          = stats.totalTags;
-  eid('section-label').textContent      = 'Items · ' + stats.totalItems;
+  // The "Items · N" label is owned by renderItemsSection, which knows the
+  // count for the currently active filter (state.total from the items API).
+  // Setting it here too would race on initial load and show the unfiltered
+  // total when a filter is active (e.g. after returning from a detail view).
 
   // Build filter chips
   const container = eid('filter-chips');
@@ -1588,6 +1591,11 @@ async function renderItemsSection(append = false) {
     if (append) state.items = [...state.items, ...result.items];
     else        state.items = result.items;
     state.total = result.total;
+
+    // result.total is the exact count matching the active type + visibility
+    // filter (the items API counts after filtering). With no filter it equals
+    // the unfiltered total, so this single line is correct in both cases.
+    eid('section-label').textContent = 'Items · ' + state.total;
 
     if (state.items.length === 0 && !append) {
       eid('empty-state').hidden = false;

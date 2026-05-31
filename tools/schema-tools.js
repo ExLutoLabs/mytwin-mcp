@@ -27,15 +27,22 @@ export async function getSchema(ctx) {
     countMap[row.type] = (countMap[row.type] || 0) + 1;
   }
 
+  // The per-type list only includes types that have a schema_types row. Derive
+  // total_items from the counts we actually return (not from every distinct
+  // type in countMap), so the total can never disagree with the visible list.
+  // A row whose type has no schema_types entry (e.g. a legacy "decision" type)
+  // is therefore excluded from both, by construction.
+  const typeList = (types || []).map(t => ({
+    name: t.name,
+    description: t.description,
+    count: countMap[t.name] || 0,
+  }));
+
   return {
-    types: (types || []).map(t => ({
-      name: t.name,
-      description: t.description,
-      count: countMap[t.name] || 0,
-    })),
-    total_types: (types || []).length,
-    total_items: Object.values(countMap).reduce((a, b) => a + b, 0),
-    note: 'Add new types with add_schema_type. Extend from Claude chat — no database access needed.',
+    types: typeList,
+    total_types: typeList.length,
+    total_items: typeList.reduce((sum, t) => sum + t.count, 0),
+    note: 'Add new types with add_schema_type. Extend from Claude chat, no database access needed.',
   };
 }
 
