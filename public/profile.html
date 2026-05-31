@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile · MyAITwin</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Spline+Sans+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #05060e;
+  --panel:   rgba(9,11,24,0.92);
+  --line:    rgba(150,160,220,0.18);
+  --ink:     #eef0ff;
+  --dim:     #666e9a;
+  --dim-2:   #8088bb;
+  --yellow:  #FFD400;
+  --red:     #ff5d7a;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Spline Sans Mono', ui-monospace, monospace;
+  font-size: 14px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+button, input { font-family: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--dim-2); outline-offset: 2px; }
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+header.site-header {
+  position: sticky; top: 0; z-index: 30;
+  border-bottom: 1px solid var(--line);
+  background: rgba(5,6,14,0.85);
+  backdrop-filter: blur(10px);
+}
+.header-inner {
+  max-width: 1100px; margin: 0 auto;
+  padding: 14px 32px;
+  display: flex; align-items: center; gap: 16px;
+}
+.logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.logo-mark {
+  position: relative; display: inline-block;
+  width: 22px; height: 22px; flex-shrink: 0;
+}
+.logo-mark::before {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px; border-radius: 3px;
+  background: #000; opacity: 0.5;
+}
+.logo-mark::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 20px; height: 20px; border-radius: 3px;
+  background: var(--yellow); border: 1.5px solid rgba(0,0,0,0.6);
+}
+.logo-text { display: flex; flex-direction: column; gap: 1px; }
+.logo-name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.05rem; font-weight: 400; letter-spacing: -0.01em;
+  line-height: 1.1; color: var(--ink);
+}
+.logo-by {
+  font-size: 7px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.2em; color: var(--dim); line-height: 1;
+}
+.header-spacer { flex: 1; }
+.nav-link {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--dim);
+  text-decoration: none; padding: 6px 11px; border-radius: 6px;
+  transition: color 120ms, background 120ms;
+}
+.nav-link:hover { color: var(--ink); background: rgba(150,160,220,0.08); }
+
+/* ── Hypergraph stage ──────────────────────────────────────────────────── */
+#hypergraph-container {
+  position: relative;
+  width: 100%; height: 56vh; min-height: 360px;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 95% 95% at 50% 45%, rgba(20,24,55,0.55) 0%, transparent 60%),
+    var(--bg);
+}
+#hypergraph-status {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 24px;
+  color: var(--dim); font-size: 12.5px; letter-spacing: 0.03em;
+}
+#hypergraph-status .hg-line2 { color: var(--dim-2); margin-top: 8px; font-size: 11px; }
+
+/* ── Page body ─────────────────────────────────────────────────────────── */
+.page-wrap { max-width: 1100px; margin: 0 auto; padding: 36px 32px 96px; }
+
+/* Identity card + stats */
+.identity-row {
+  display: flex; align-items: flex-start; gap: 22px;
+  flex-wrap: wrap;
+}
+.avatar {
+  width: 56px; height: 56px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', Georgia, serif; font-size: 1.6rem;
+  color: var(--bg); background: var(--yellow);
+  border: 1px solid rgba(0,0,0,0.5);
+}
+.identity-main { flex: 1; min-width: 220px; }
+.identity-name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.9rem; font-weight: 400; letter-spacing: -0.02em;
+  line-height: 1.15; color: var(--ink);
+}
+.identity-meta { color: var(--dim); font-size: 12.5px; margin-top: 6px; }
+.identity-meta span { color: var(--dim-2); }
+
+.stats-row {
+  display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px;
+}
+.stat {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px 20px; min-width: 120px;
+}
+.stat-num {
+  font-family: 'Fraunces', Georgia, serif; font-size: 1.7rem;
+  font-weight: 400; color: var(--ink); line-height: 1;
+}
+.stat-label {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--dim); margin-top: 8px;
+}
+
+/* ── Settings (collapsible) ────────────────────────────────────────────── */
+.settings {
+  margin-top: 44px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.settings-toggle {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: none; border: none; padding: 18px 0;
+  color: var(--dim); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.14em;
+}
+.settings-toggle:hover { color: var(--ink); }
+.settings-toggle .chev { transition: transform 160ms; font-size: 11px; }
+.settings-toggle[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.settings-body { padding-bottom: 24px; }
+
+.section {
+  border-top: 1px solid var(--line);
+  padding: 22px 0;
+}
+.section:first-child { border-top: none; }
+.section-label {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--dim); margin-bottom: 8px;
+}
+.section-value { font-size: 14px; color: var(--ink); }
+.section-meta { font-size: 12px; color: var(--dim); margin-top: 4px; }
+
+.token-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; margin-top: 12px;
+}
+.token-info { flex: 1; min-width: 0; }
+.token-prefix { font-size: 12px; font-weight: 600; color: var(--ink); }
+.token-dates { font-size: 10px; color: var(--dim); margin-top: 3px; }
+.token-url-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; margin-top: 12px;
+  font-size: 11px; color: var(--ink); word-break: break-all;
+}
+.token-warning { font-size: 12px; color: var(--dim); font-style: italic; margin-top: 8px; }
+
+.btn {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 18px; border-radius: 9px;
+  border: 1px solid var(--line); background: rgba(150,160,220,0.06);
+  color: var(--ink); transition: background 120ms, border-color 120ms;
+  display: inline-block;
+}
+.btn:hover { background: rgba(150,160,220,0.14); border-color: var(--dim-2); }
+.btn-primary { background: var(--yellow); color: var(--bg); border-color: rgba(0,0,0,0.4); font-weight: 700; }
+.btn-primary:hover { background: #ffe14d; }
+.btn-danger { color: var(--red); border-color: rgba(255,93,122,0.5); background: rgba(255,93,122,0.06); }
+.btn-danger:hover { background: rgba(255,93,122,0.14); }
+
+.delete-section { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 8px; }
+.delete-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.delete-desc { font-size: 12px; color: var(--dim); margin-bottom: 16px; line-height: 1.55; }
+
+.text-input {
+  font-family: inherit; font-size: 13px; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel); color: var(--ink); width: 130px;
+}
+
+.loading-state { color: var(--dim); font-style: italic; padding: 40px 0; }
+.error-state { color: var(--red); font-size: 13px; padding: 12px 0; }
+
+@media (max-width: 640px) {
+  .header-inner { padding: 12px 18px; }
+  .page-wrap { padding: 28px 18px 72px; }
+  .identity-name { font-size: 1.55rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <span class="logo-mark"></span>
+      <span class="logo-text">
+        <span class="logo-name">MyAITwin</span>
+        <span class="logo-by">by Luto</span>
+      </span>
+    </a>
+    <span class="header-spacer"></span>
+    <a href="/twin" class="nav-link">Twin</a>
+    <a href="/twin/library" class="nav-link">Library</a>
+  </div>
+</header>
+
+<!-- Hypergraph stage (renderer arrives in sub-phase 3) -->
+<div id="hypergraph-container">
+  <div id="hypergraph-status">
+    <div>
+      <div class="hg-line1">Loading your hypergraph…</div>
+      <div class="hg-line2" id="hg-detail"></div>
+    </div>
+  </div>
+</div>
+
+<main class="page-wrap">
+  <div id="loading" class="loading-state">Loading…</div>
+  <div id="profile-error" class="error-state" hidden></div>
+
+  <div id="profile-content" hidden>
+    <!-- Identity + stats -->
+    <div class="identity-row">
+      <div class="avatar" id="identity-avatar">·</div>
+      <div class="identity-main">
+        <div class="identity-name" id="identity-name">—</div>
+        <div class="identity-meta" id="identity-meta">—</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-num" id="stat-items">—</div>
+          <div class="stat-label">Items</div>
+        </div>
+        <div class="stat" id="stat-concept-wrap">
+          <div class="stat-num" id="stat-concepts">—</div>
+          <div class="stat-label">Concept pages</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings (owner-only, collapsed by default) -->
+    <div class="settings" id="settings" hidden>
+      <button type="button" class="settings-toggle" id="settings-toggle" aria-expanded="false" aria-controls="settings-body">
+        <span class="chev">›</span> Settings
+      </button>
+      <div class="settings-body" id="settings-body" hidden>
+
+        <div class="section">
+          <div class="section-label">Email</div>
+          <div class="section-value" id="set-email">—</div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Shared Twin</div>
+          <div id="shared-empty" style="margin-top:4px">
+            <p class="section-meta" style="margin-bottom:12px">Share a read-only view of your twin with others — only items you mark as Sharable are visible.</p>
+            <button type="button" class="btn btn-primary" id="generate-token-btn">Generate shared MCP link</button>
+          </div>
+          <div id="shared-new-token" hidden>
+            <p class="section-meta" style="margin-bottom:8px">Share this link. It's shown once — save it now.</p>
+            <div class="token-url-box" id="new-token-url"></div>
+            <p class="token-warning">This link won't be shown again.</p>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button type="button" class="btn btn-primary" id="copy-token-btn">Copy link</button>
+              <button type="button" class="btn" id="done-token-btn">Done</button>
+            </div>
+          </div>
+          <div id="shared-active" hidden>
+            <div class="token-row">
+              <div class="token-info">
+                <div class="token-prefix" id="active-token-prefix">—</div>
+                <div class="token-dates" id="active-token-dates">—</div>
+              </div>
+              <button type="button" class="btn" id="revoke-token-btn">Revoke</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <button type="button" class="btn" id="signout-btn">Sign out</button>
+        </div>
+
+        <div class="delete-section">
+          <div class="delete-title">Delete account</div>
+          <div class="delete-desc">This permanently deletes your twin and all stored knowledge. It cannot be undone.</div>
+          <button type="button" class="btn btn-danger" id="delete-btn">Delete my account</button>
+          <div id="delete-confirm" hidden style="margin-top:16px">
+            <p style="font-size:13px;color:var(--red);margin-bottom:12px">Are you sure? Type <strong>DELETE</strong> to confirm:</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="text" id="delete-confirm-input" class="text-input" placeholder="DELETE">
+              <button type="button" class="btn btn-danger" id="delete-confirm-btn">Permanently delete</button>
+              <button type="button" class="btn" id="delete-cancel-btn">Cancel</button>
+            </div>
+            <div id="delete-error" class="error-state" hidden></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+const APP_URL = 'https://myaitwin.lutolearn.com';
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── Auth gate (mirrors the twin/account session pattern) ─────────────────────
+async function checkAuth() {
+  try {
+    const res  = await fetch('/api/auth/session');
+    const data = await res.json().catch(() => ({}));
+    if (data.is_authenticated && data.email) {
+      localStorage.setItem('mt_is_authenticated', 'true');
+      localStorage.setItem('mt_user_email', data.email);
+      return true;
+    }
+  } catch { /* fall through to redirect */ }
+  window.location.replace('/twin');
+  return false;
+}
+
+// ── Format helpers ───────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function fmtDateShort(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+function timeAgo(iso) {
+  if (!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (s < 86400) return 'today';
+  if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+  return fmtDateShort(iso);
+}
+function plural(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
+
+// ── State ──────────────────────────────────────────────────────────────────
+let _currentTokens = [];
+let _newRawToken   = null;
+let _isOwner       = false;
+
+// ── Chrome: identity + stats + settings read-state ───────────────────────────
+async function loadProfile() {
+  const res = await fetch('/api/profile');
+  if (!res.ok) throw new Error('Could not load profile');
+  return res.json();
+}
+
+function renderProfile(data) {
+  _isOwner = !!data.viewer_is_owner;
+  const name  = (data.owner && data.owner.name)  || '—';
+  const email = (data.owner && data.owner.email) || '';
+
+  document.getElementById('identity-avatar').textContent = (name || '·').trim().charAt(0).toUpperCase() || '·';
+  document.getElementById('identity-name').textContent = name;
+  const metaParts = [];
+  if (email) metaParts.push(escapeHtml(email));
+  if (data.member_since) metaParts.push('member since <span>' + escapeHtml(fmtDate(data.member_since)) + '</span>');
+  document.getElementById('identity-meta').innerHTML = metaParts.join(' · ');
+
+  const stats = data.stats || {};
+  document.getElementById('stat-items').textContent = (stats.items ?? 0).toLocaleString();
+  if (_isOwner) {
+    document.getElementById('stat-concepts').textContent = (stats.concept_pages ?? 0).toLocaleString();
+  } else {
+    document.getElementById('stat-concept-wrap').hidden = true;
+  }
+
+  // Settings: owner-only.
+  if (_isOwner) {
+    document.getElementById('settings').hidden = false;
+    document.getElementById('set-email').textContent = email || '—';
+    _currentTokens = data.shared_tokens || [];
+    renderSharedSection();
+  }
+}
+
+// ── Hypergraph data wiring (renderer is sub-phase 3) ─────────────────────────
+async function loadHypergraph() {
+  const detail = document.getElementById('hg-detail');
+  try {
+    const res = await fetch('/api/profile/hypergraph');
+    if (!res.ok) throw new Error('graph ' + res.status);
+    const g = await res.json();
+    const n = (g.nodes || []).length;
+    const e = (g.edges || []).length;
+    document.querySelector('#hypergraph-status .hg-line1').textContent =
+      n === 0 ? 'Your hypergraph is empty for now.' : 'Hypergraph ready.';
+    detail.textContent = n === 0
+      ? 'Add knowledge to your twin to grow the graph.'
+      : `${plural(n, 'node')} · ${plural(e, 'edge')} · renderer arrives in sub-phase 3`;
+  } catch (err) {
+    document.querySelector('#hypergraph-status .hg-line1').textContent = 'Could not load the hypergraph.';
+    detail.textContent = 'Try refreshing.';
+  }
+}
+
+// ── Shared-token settings (reuse existing /api/account/* endpoints) ──────────
+function renderSharedSection() {
+  const hasToken = _currentTokens.length > 0;
+  document.getElementById('shared-empty').hidden     = hasToken || !!_newRawToken;
+  document.getElementById('shared-new-token').hidden = !_newRawToken;
+  document.getElementById('shared-active').hidden    = !hasToken || !!_newRawToken;
+
+  if (hasToken && !_newRawToken) {
+    const t = _currentTokens[0];
+    document.getElementById('active-token-prefix').textContent = t.prefix + '…';
+    const created  = t.created_at   ? 'created ' + fmtDateShort(t.created_at) : '';
+    const lastUsed = t.last_used_at ? 'last used ' + timeAgo(t.last_used_at) : 'never used';
+    document.getElementById('active-token-dates').textContent = [created, lastUsed].filter(Boolean).join(' · ');
+  }
+  if (_newRawToken) {
+    document.getElementById('new-token-url').textContent = `${APP_URL}/mcp/shared/${_newRawToken}`;
+  }
+}
+
+document.getElementById('settings-toggle')?.addEventListener('click', () => {
+  const t = document.getElementById('settings-toggle');
+  const open = t.getAttribute('aria-expanded') === 'true';
+  t.setAttribute('aria-expanded', String(!open));
+  document.getElementById('settings-body').hidden = open;
+});
+
+document.getElementById('generate-token-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('generate-token-btn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try {
+    const res  = await fetch('/api/account/shared-token', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    _newRawToken = data.token;
+    _currentTokens = [{ id: data.id, prefix: data.prefix, created_at: data.created_at, last_used_at: null }];
+    renderSharedSection();
+  } catch (err) {
+    alert('Could not generate link: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Generate shared MCP link';
+  }
+});
+
+document.getElementById('copy-token-btn')?.addEventListener('click', () => {
+  navigator.clipboard.writeText(`${APP_URL}/mcp/shared/${_newRawToken}`).then(() => {
+    const btn = document.getElementById('copy-token-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy link'; }, 2000);
+  });
+});
+
+document.getElementById('done-token-btn')?.addEventListener('click', () => {
+  _newRawToken = null;
+  renderSharedSection();
+});
+
+document.getElementById('revoke-token-btn')?.addEventListener('click', async () => {
+  if (!confirm('Revoke this shared link? Anyone using it will lose access immediately.')) return;
+  const btn = document.getElementById('revoke-token-btn');
+  btn.disabled = true; btn.textContent = 'Revoking…';
+  try {
+    await fetch('/api/account/shared-token', { method: 'DELETE' });
+    _currentTokens = [];
+    renderSharedSection();
+  } catch {
+    /* leave the row in place on failure */
+  } finally {
+    btn.disabled = false; btn.textContent = 'Revoke';
+  }
+});
+
+// ── Sign out (reuse /api/auth/signout) ───────────────────────────────────────
+document.getElementById('signout-btn')?.addEventListener('click', async () => {
+  localStorage.removeItem('mt_is_authenticated');
+  localStorage.removeItem('mt_user_email');
+  localStorage.removeItem('mt_anon_token');
+  try { await fetch('/api/auth/signout', { method: 'POST' }); } catch {}
+  window.location.href = '/twin';
+});
+
+// ── Delete account (reuse DELETE /api/account) ───────────────────────────────
+document.getElementById('delete-btn')?.addEventListener('click', () => {
+  document.getElementById('delete-confirm').hidden = false;
+  document.getElementById('delete-confirm-input').focus();
+});
+document.getElementById('delete-cancel-btn')?.addEventListener('click', () => {
+  document.getElementById('delete-confirm').hidden = true;
+  document.getElementById('delete-confirm-input').value = '';
+  document.getElementById('delete-error').hidden = true;
+});
+document.getElementById('delete-confirm-btn')?.addEventListener('click', async () => {
+  const val = document.getElementById('delete-confirm-input').value.trim();
+  const errEl = document.getElementById('delete-error');
+  if (val !== 'DELETE') { errEl.textContent = 'Type DELETE to confirm.'; errEl.hidden = false; return; }
+  errEl.hidden = true;
+  const btn = document.getElementById('delete-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    const res = await fetch('/api/account', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: 'DELETE-MY-ACCOUNT' }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Deletion failed');
+    localStorage.clear();
+    window.location.href = '/twin';
+  } catch (err) {
+    errEl.textContent = err.message; errEl.hidden = false;
+    btn.disabled = false; btn.textContent = 'Permanently delete';
+  }
+});
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  const ok = await checkAuth();
+  if (!ok) return;
+  try {
+    const data = await loadProfile();
+    document.getElementById('loading').hidden = true;
+    document.getElementById('profile-content').hidden = false;
+    renderProfile(data);
+  } catch (err) {
+    document.getElementById('loading').hidden = true;
+    const e = document.getElementById('profile-error');
+    e.textContent = 'Could not load your profile. Try refreshing.';
+    e.hidden = false;
+  }
+  loadHypergraph();
+})();
+</script>
+
+</body>
+</html>
