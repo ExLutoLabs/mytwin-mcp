@@ -38,7 +38,7 @@ function todayIso() {
 // Built from the canonical spec at docs/twin-behaviour-spec.md. Anything that
 // touches user-facing prose lives here, in one place, so a change shows up
 // in every chat turn at once.
-function chatInstruction({ mode, hasResults, hasSkill, skillGap, today, stage, spell, hasConceptPages }) {
+export function chatInstruction({ mode, hasResults, hasSkill, skillGap, today, stage, spell, hasConceptPages, hasShared }) {
   const lines = [
     `You are MyAITwin running inside the /twin web chat (myaitwin.lutolearn.com/twin). You are not an assistant. You are a thinking partner. Today is ${today}.`,
     stage ? stageGuidance(stage) : '',
@@ -65,18 +65,23 @@ function chatInstruction({ mode, hasResults, hasSkill, skillGap, today, stage, s
         : 'No matching skill exists yet. Be honest about it: say "No specific skill stored for this yet. This is a capable draft, not your established voice. Worth codifying once we get it right." Then produce the output using their stored knowledge. Do not imply the output sounds like them when it was improvised.',
       'Cite each item inline using its number in square brackets, like [1] or [2].',
       'Anti-AI-soup: extract their original work, do not generate generic synthesis on top of it. Connective tissue only.',
+      'SHOW WHAT YOU USED (spec §4.4): open the output with one short line naming what you drew on, skills and knowledge items both. Example: "I drew on your LinkedIn voice from March and your notes from yesterday\'s meeting." Name only skills and items actually present in the buckets above, never invented ones.',
       skillGap?.skill_gap_threshold_reached
         ? `END WITH: a single sentence noting they've asked for this output type ${skillGap.count} times now. Phrase like the spec: "Worth building a skill so the next one starts from a better place?" Keep it light, do not nag.`
         : ''
     );
-  } else if (mode === 'browse') {
+  } else if (mode === 'browse' || mode === 'recent') {
     lines.push(
       '',
-      'BROWSE MODE (spec §4.4):',
-      'The user is asking what is stored in their twin. Summarise what is in <untrusted_knowledge> below.',
+      mode === 'recent' ? 'RECENT MODE (spec §4.3):' : 'BROWSE MODE (spec §4.4):',
+      mode === 'recent'
+        ? 'The user is asking what they recently added. The items in <untrusted_knowledge> below are their most recent additions, newest first. Lead with the most recent, order by recency rather than topic, and name each with its title, type, and when it was added.'
+        : 'The user is asking what is stored in their twin. Summarise what is in <untrusted_knowledge> below.',
       hasResults
         ? 'List each item with type, title (or one-line summary), and a brief sense of when it was added. Use the inline-citation format described below.'
-        : 'There is nothing relevant stored yet. Say so honestly: "Nothing on that yet" is useful information, not a failure. Suggest they add something.',
+        : (mode === 'recent'
+            ? 'Nothing has been added recently. Say that plainly.'
+            : 'There is nothing relevant stored yet. Say so honestly: "Nothing on that yet" is useful information, not a failure. Suggest they add something.'),
       'Do not invent items the user has not stored.',
     );
   } else {
@@ -101,8 +106,14 @@ function chatInstruction({ mode, hasResults, hasSkill, skillGap, today, stage, s
 
   lines.push(
     '',
+    'GROUNDING (honest about retrieval, spec §4.2):',
+    'Only name a specific stored item (by title, record name, tag, or description) if it appears in the knowledge context above for THIS turn. If the user asks about a record you cannot find there, say so plainly, for example "Nothing on that in what I retrieved this turn." Never invent a record, title, tag, or date, even when the conversation implies one should exist. Never propose, confirm, or build a plan against a named item you have not actually retrieved. This is the companion to voice honesty: be honest about what is and is not in retrieval.',
+    '',
     'CITATION FORMAT (spec §4.1 — anti-AI-soup, inline provenance):',
     'When you reference a retrieved item, write [N] inline using the item\'s number. The frontend renders this as a small chip showing the item\'s type and date, so the user always sees provenance without leaving the response. Do not list citations at the bottom. Do not invent items.',
+    hasShared
+      ? 'SHARED ITEMS: Some retrieved items were shared with the user by another person (marked "Shared with you by another person" in context). Draw on them as material, but attribute them honestly. Never present a shared item as the user\'s own thinking or voice.'
+      : '',
     '',
     'TEMPORAL AWARENESS (spec §4.3):',
     'Each retrieved item has an "Added" field — use it. Items from this week are fresh thinking. Items from months back may have moved on. If an item is over six months old, note it lightly: "from a while back, your thinking may have evolved".',
@@ -151,6 +162,7 @@ BIAS HEAVILY TOWARD CHAT. Storage is a deliberate act. If you are not confident 
 === When intent = chat, set chat_mode ===
 - "creation": user is asking you to help PRODUCE something (write, draft, compose, generate, help me with X). They want output. Detect the output_type if possible: "linkedin-post", "follow-up-email", "proposal", "tweet", "blog-post", "essay", etc.
 - "browse": user is asking what is stored, what they have, search-type queries. "What do I have on X?", "show me my notes about Y", "find me what I wrote about Z", "list my principles".
+- "recent": user is asking about their most recent activity or a recent time window, where date order matters more than topic match. Triggers: "what did I add today", "what have I saved this week", "what did I store recently", "my latest items", "what have I been working on lately", "yesterday", "the last few days". Use this rather than browse when recency is the point.
 - "general": everything else. Greetings, meta-questions, casual conversation, questions that aren't specifically retrieval or creation.
 
 === STORE signals (only route here when clear) ===
@@ -166,6 +178,7 @@ BIAS HEAVILY TOWARD CHAT. Storage is a deliberate act. If you are not confident 
 - "Hey twin" → chat (mode: general). Always.
 - "whats this" / "what is this" → chat (mode: general). Always.
 - "What do I have so far?" / "Show me my..." → chat (mode: browse).
+- "What did I add today?" / "what have I saved this week" / "my latest" → chat (mode: recent).
 - "Help me write a..." / "Draft a..." → chat (mode: creation), set output_type.
 - Anything ending in "?" → chat unless it's part of a longer captured thought.
 - "Remember this" or "save this" → store. Skip ambiguous.
@@ -191,6 +204,9 @@ BIAS HEAVILY TOWARD CHAT. Storage is a deliberate act. If you are not confident 
   Infer from context. Keep the user's voice (personal) and a client's voice (client) strictly distinct — never blur them.
 - clarifying_question: optional. Use it for the source link rule (spec §3.5) when the content references an external source but no link is provided. Examples that trigger asking: content mentions "an HBR article said...", "a Google Doc I have...", "in this Notion page...", "the deck from last week...", "according to [author]...". Ask ONCE, lightly: "Got a link for that source?" — do not nag if they decline. Do NOT ask for source links on the user's own thinking (no external reference).
 
+=== content_override (conversation-aware storage) ===
+Normally leave content_override blank. ONLY set it when the user's current message is a short reference to content from earlier in the conversation (for example, the substance was stated a turn or two ago and the user now says "store it" or "save that as a contact"). In that case reconstruct the actual content to store from the conversation above and put it in content_override. When the current message itself carries the substance, leave content_override blank so the server stores the message verbatim.
+
 === When intent = store and tags are weak (less than 3 substantive ones) ===
 The content may be too thin to store well. Still propose, but the user will see the thin tag set in the card and can decide. Do not invent nonsense tags to pad the count.
 
@@ -208,7 +224,7 @@ const INTENT_SCHEMA = {
   type: 'object',
   properties: {
     intent:      { type: 'string', enum: ['chat', 'store', 'ambiguous'] },
-    chat_mode:   { type: 'string', enum: ['general', 'creation', 'browse'] },
+    chat_mode:   { type: 'string', enum: ['general', 'creation', 'browse', 'recent'] },
     output_type: { type: 'string' },
     confidence:  { type: 'number' },
     reason:      { type: 'string' },
@@ -221,6 +237,7 @@ const INTENT_SCHEMA = {
         tags:                { type: 'array', items: { type: 'string' } },
         provenance:          { type: 'string', enum: ['personal', 'organisational', 'employer', 'client', 'external'] },
         clarifying_question: { type: 'string' },
+        content_override:    { type: 'string' },
       },
       required: ['title', 'type', 'tags', 'provenance'],
       additionalProperties: false,
@@ -254,22 +271,39 @@ function cleanTags(rawTags, userText) {
   return cleaned.length ? Array.from(new Set(cleaned)).slice(0, 5) : ['untagged'];
 }
 
-async function classifyIntent(text, hasHistory) {
+// RC1 fix (May 2026 chat-surface audit, sub-phase 3): the classifier used to
+// receive only a boolean "hasHistory". That left it blind to prior turns, so a
+// follow-up like "store it as a contact" could not see the contact details
+// stated a turn earlier (the Jack Fannon bug). It now receives the recent
+// conversation so it can both classify in context and, when the current message
+// is a short reference, reconstruct the actual content to store via
+// content_override. `history` is the [{role, content}] array (or a boolean is
+// tolerated for backward compatibility, treated as "no usable history").
+export async function classifyIntent(text, history) {
+  const recentHistory = Array.isArray(history) ? history.slice(-6) : [];
+  const historyBlock = recentHistory.length > 0
+    ? recentHistory
+        .map(m => `${m.role === 'assistant' ? 'Twin' : 'User'}: ${String(m.content || '').slice(0, 500)}`)
+        .join('\n')
+    : null;
+
   const userBlock = [
-    hasHistory ? '[There is conversation history — the user is mid-chat.]' : '[This is an early message in the conversation.]',
+    historyBlock
+      ? `[Recent conversation, oldest first:\n${historyBlock}\n]`
+      : '[This is the opening message of the conversation.]',
     '',
     '<user_message>',
     text,
     '</user_message>',
     '',
-    'Classify the intent. Be biased toward chat. If chat, set chat_mode. If store, generate the proposal.',
+    'Classify the intent. Be biased toward chat. If chat, set chat_mode. If store, generate the proposal. When the user message is a short reference to something said earlier (for example "store it", "save that", "remember that as a contact", "yes do it"), use the conversation above to fill the proposal and put the actual content to store in content_override.',
   ].join('\n');
 
   const { data } = await callFastJson({
     system: CLASSIFIER_SYSTEM,
     messages: [{ role: 'user', content: userBlock }],
     schema: INTENT_SCHEMA,
-    maxTokens: 800,
+    maxTokens: 900,
   });
   if (data.intent === 'store' && data.proposal) {
     data.proposal.tags = cleanTags(data.proposal.tags, text);
@@ -350,7 +384,10 @@ function buildKnowledgeBlock(items, tagName = 'untrusted_knowledge') {
       `Source: ${r.source_ref}`,
       `Added: ${r.created_at}${age ? ` (${age})` : ''}`,
       `Provenance: ${provenance}`,
-    ].join('\n');
+      // Phase 1: items someone else shared with the user (can_use+). Flagged so
+      // the model attributes them as shared, never as the user's own thinking.
+      r.shared ? `Shared with you by another person (${r.access_level || 'can_use'})` : '',
+    ].filter(Boolean).join('\n');
   }).join('\n\n---\n\n');
   return `<${tagName}>\n${body}\n</${tagName}>\n\n`;
 }
@@ -367,6 +404,10 @@ function citationsFor(items) {
     short_date:   shortDate(r.created_at),
     relative_age: relativeAge(r.created_at),
     relevance:    r.relevance,
+    // Phase 1 sharing: true when this item was shared with the user by someone
+    // else. The frontend renders a "shared" badge (Sub-phase 4).
+    shared:       r.shared || false,
+    ...(r.shared ? { access_level: r.access_level || 'can_use' } : {}),
   }));
 }
 
@@ -478,8 +519,20 @@ export default async function handler(req, res) {
 
   const body = req.body || {};
   const text = typeof body.text === 'string' ? body.text : '';
-  if (!text.trim()) {
-    return res.status(400).json({ error: 'text is required' });
+
+  // Optional image attachment for vision (sub-phase 7A): { media_type, data }
+  // where data is raw base64 (no data: URL prefix). Whitelist type, cap size.
+  const IMG_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+  const rawImage = body.image && typeof body.image === 'object' ? body.image : null;
+  const image = rawImage
+      && typeof rawImage.data === 'string' && rawImage.data.length > 0
+      && rawImage.data.length < 7_000_000              // ~5MB of base64
+      && IMG_TYPES.has(rawImage.media_type)
+    ? { media_type: rawImage.media_type, data: rawImage.data }
+    : null;
+
+  if (!text.trim() && !image) {
+    return res.status(400).json({ error: 'text or image is required' });
   }
   const history = Array.isArray(body.history) ? body.history.slice(-12) : [];
 
@@ -512,7 +565,7 @@ export default async function handler(req, res) {
     const spell = matchSpell(text);
     if (spell?.action === 'store-now') {
       // Accio — straight to propose.
-      const cls = await classifyIntent(spell.payload, history.length > 0);
+      const cls = await classifyIntent(spell.payload, history);
       const proposal = cls.proposal || {
         title: spell.payload.split(/\s+/).slice(0, 6).join(' '),
         type: 'knowledge',
@@ -530,16 +583,28 @@ export default async function handler(req, res) {
       return;
     }
 
-    const classification = (spell?.action === 'search' || spell?.action === 'synthesise')
-      ? { intent: 'chat', chat_mode: 'browse', confidence: 1, reason: `spell: ${spell.action}` }
-      : await classifyIntent(text, history.length > 0);
-    const querySeed = spell?.payload || text;
+    // An attached image always makes this a chat turn (never a text store
+    // proposal). With no text, skip the classifier entirely (sub-phase 7A).
+    const classification = (image && !text.trim())
+      ? { intent: 'chat', chat_mode: 'general', confidence: 1, reason: 'image only' }
+      : (spell?.action === 'search' || spell?.action === 'synthesise')
+        ? { intent: 'chat', chat_mode: 'browse', confidence: 1, reason: `spell: ${spell.action}` }
+        : await classifyIntent(text, history);
+    if (image && classification.intent !== 'chat') {
+      classification.intent = 'chat';
+      classification.chat_mode = classification.chat_mode || 'general';
+    }
+    const querySeed = spell?.payload || text || 'attached image';
 
     // ── STORE branch ──────────────────────────────────────────────────────
     if (classification.intent === 'store' && classification.proposal) {
+      // RC1 fix: content_override carries content the classifier reconstructed
+      // from earlier turns (e.g. user said the substance, then "store it"). When
+      // present it is the content to store; otherwise the current message is.
+      const { content_override, ...proposalFields } = classification.proposal;
       sse.send('meta', {
         kind: 'store-proposal',
-        proposal: { ...classification.proposal, content: text },
+        proposal: { ...proposalFields, content: content_override || text },
         confidence: classification.confidence,
       });
       sse.send('done', {});
@@ -600,6 +665,18 @@ export default async function handler(req, res) {
       conceptCtx     = ctxResult;
       driftLog       = drift;
       skillProposal  = proposal;
+    } else if (mode === 'recent') {
+      // RC3 fix (sub-phase 5): recency-first queries ("what did I add today")
+      // route to listRecent (date-ordered) instead of semantic search, so the
+      // answer reflects recency, not topic similarity.
+      const [recent, ctxResult, drift] = await Promise.all([
+        listRecent(ctx, { limit: 12 }),
+        getConceptContext(ctx, querySeed, contextConceptIds).catch(() => ''),
+        getRecentBackgroundLog(ctx.tenantId, 'drift-detection', 25).catch(() => null),
+      ]);
+      knowledgeItems = recent.items || [];
+      conceptCtx     = ctxResult;
+      driftLog       = drift;
     } else {
       const [search, ctxResult, drift] = await Promise.all([
         searchTwin(ctx, { query: querySeed, top_k: RETRIEVAL_K }),
@@ -659,7 +736,19 @@ export default async function handler(req, res) {
       role:    m.role === 'assistant' ? 'assistant' : 'user',
       content: typeof m.content === 'string' ? m.content : String(m.content || ''),
     }));
-    messages.push({ role: 'user', content: contextBlock + text });
+    // Attach the image as a vision content block when present (sub-phase 7A).
+    const userText = contextBlock + (text || (image ? 'I have attached an image. Take a look and respond.' : ''));
+    if (image) {
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text',  text: userText },
+          { type: 'image', source: { type: 'base64', media_type: image.media_type, data: image.data } },
+        ],
+      });
+    } else {
+      messages.push({ role: 'user', content: userText });
+    }
 
     // Stream tokens to the client as they arrive.
     const final = await streamTwin({
@@ -675,6 +764,7 @@ export default async function handler(req, res) {
         stage,
         spell:          spell?.action,
         hasConceptPages,
+        hasShared:      allItems.some(it => it.shared),
       }),
       signal: abort.signal,
       onText: (delta) => sse.send('token', { text: delta }),

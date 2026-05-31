@@ -889,7 +889,8 @@ body.embed { background: var(--paper); }
       </span>
     </a>
     <div class="header-right">
-      <a href="/create" class="signin-link">Sign in</a>
+      <a href="/create" class="signin-link" id="lib-signin-link">Sign in</a>
+      <a href="/twin/account" class="signin-link" id="lib-account-link" hidden></a>
     </div>
   </div>
 </header>
@@ -2004,7 +2005,41 @@ window.addEventListener('popstate', () => {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
+// RC4 fix (May 2026 audit, sub-phase 6): library.html previously had a
+// hardcoded "Sign in" link and ran no session check, so it showed "Sign in"
+// even when the user was authenticated (their data still loaded fine via the
+// session cookie). Mirror twin.html: validate the session and toggle the
+// header. Data identity is unchanged: requireTenant already prefers the session
+// cookie server-side, so this only corrects the header UI.
+async function syncHeaderAuth() {
+  let isAuth = false, email = '';
+  try {
+    const res  = await fetch('/api/auth/session');
+    const data = await res.json().catch(() => ({}));
+    isAuth = !!(data.is_authenticated && data.email);
+    email  = data.email || '';
+    if (isAuth) {
+      localStorage.setItem('mt_is_authenticated', 'true');
+      localStorage.setItem('mt_user_email', email);
+    } else {
+      localStorage.removeItem('mt_is_authenticated');
+      localStorage.removeItem('mt_user_email');
+    }
+  } catch {
+    isAuth = localStorage.getItem('mt_is_authenticated') === 'true';
+    email  = localStorage.getItem('mt_user_email') || '';
+  }
+  const signin = document.getElementById('lib-signin-link');
+  const acct   = document.getElementById('lib-account-link');
+  if (signin) signin.hidden = isAuth;
+  if (acct) {
+    acct.hidden = !isAuth;
+    if (isAuth && email) acct.textContent = email.length > 24 ? email.slice(0, 22) + '…' : email;
+  }
+}
+
 (async function init() {
+  syncHeaderAuth();
   const isEmbed = new URLSearchParams(location.search).has('embed');
   state.token = localStorage.getItem(STORAGE_KEY);
   if (!state.token && !isEmbed) {

@@ -68,6 +68,11 @@
     "api/auth/session.js":                 { "maxDuration": 10  },
     "api/auth/signout.js":                 { "maxDuration": 10  },
     "api/account/index.js":                { "maxDuration": 15  },
-    "api/account/shared-token.js":         { "maxDuration": 15  }
+    "api/account/shared-token.js":         { "maxDuration": 15  },
+    "api/items/[id]/share.js":             { "maxDuration": 15  },
+    "api/items/[id]/permissions/index.js": { "maxDuration": 10  },
+    "api/items/[id]/permissions/[permissionId].js": { "maxDuration": 10 },
+    "api/invitations/[token]/index.js":    { "maxDuration": 10  },
+    "api/invitations/[token]/accept.js":   { "maxDuration": 15  }
   }
 }

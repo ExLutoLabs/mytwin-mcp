@@ -665,6 +665,26 @@
     padding: 14px 32px;
     width: 100%;
   }
+  /* Pending image preview above the input bar (sub-phase 7A) */
+  .pending-image-chip {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 0 8px; padding: 6px 8px;
+    border: 1px solid var(--line); border-radius: 8px; background: #FBFAF7;
+  }
+  .pending-image-thumb {
+    width: 40px; height: 40px; object-fit: cover; border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+  .pending-image-label { font-size: 13px; color: var(--muted); }
+  .pending-image-remove {
+    margin-left: auto; border: none; background: none; cursor: pointer;
+    font-size: 20px; line-height: 1; color: var(--muted); padding: 0 4px;
+  }
+  .pending-image-remove:hover { color: var(--ink); }
+  .msg-user-image {
+    display: block; max-width: 240px; max-height: 240px;
+    border-radius: 8px; margin-top: 8px;
+  }
   .input-form {
     display: flex; gap: 10px; align-items: flex-end;
     border: 1.5px solid var(--ink);
@@ -1364,7 +1384,7 @@
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
-        <input type="file" id="upload-file" hidden accept=".txt,.md">
+        <input type="file" id="upload-file" hidden accept=".txt,.md,.pdf,.docx,image/png,image/jpeg,image/gif,image/webp">
 
         <div id="add-menu" class="add-menu" role="menu" aria-label="Add to your twin">
           <!-- Default view: choose what to add -->
@@ -1379,7 +1399,7 @@
               </span>
               <span class="add-opt-text">
                 <span class="add-opt-title">Document</span>
-                <span class="add-opt-sub">A .txt or .md file</span>
+                <span class="add-opt-sub">Image, .pdf, .docx, .txt or .md</span>
               </span>
             </button>
             <button type="button" class="add-opt" id="add-opt-url" role="menuitem">
@@ -1464,6 +1484,7 @@ const state = {
   wikiLoaded:          { brain: false, library: false },
   voiceLoaded:         false,
   ctxLoaded:           false,
+  pendingImage:        null, // { media_type, data, dataUrl } — rides the next chat turn (sub-phase 7A)
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -1829,9 +1850,17 @@ function appendMsg(node) {
   requestAnimationFrame(() => scrollThreadToBottom());
 }
 
-function renderUser(text) {
+function renderUser(text, imageUrl) {
   const row = el('div', 'msg msg-row msg-row-user');
-  row.appendChild(el('div', 'msg-user', text));
+  const bubble = el('div', 'msg-user', text || '');
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = 'attached image';
+    img.className = 'msg-user-image';
+    bubble.appendChild(img);
+  }
+  row.appendChild(bubble);
   appendMsg(row);
 }
 
@@ -1861,40 +1890,14 @@ function renderProposal(proposal) {
     grid.appendChild(el('div', 'proposal-value', proposal.title));
   }
 
-  // Type selector — the classifier proposes a best-fit type from the full set
-  // (spec §3.2); the user can correct it. Pre-select the proposed type.
+  // Read-only type preview (store-proposal-table brief, sub-phase 7B). The
+  // classifier proposes the best-fit type; the user approves with Store or
+  // corrects it by talking to the twin, not by editing the card inline.
   const TYPE_OPTIONS = ['knowledge', 'skill', 'idea', 'principle', 'voice', 'brand', 'template', 'resource'];
-  let selectedType    = TYPE_OPTIONS.includes(proposal.type) ? proposal.type : 'knowledge';
-  let selectedLiving  = false;
+  const selectedType   = TYPE_OPTIONS.includes(proposal.type) ? proposal.type : 'knowledge';
+  const selectedLiving = false;
   grid.appendChild(el('div', 'proposal-label', 'Type'));
-  const typeSelect = document.createElement('select');
-  typeSelect.className = 'proposal-select';
-  TYPE_OPTIONS.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
-    if (t === selectedType) opt.selected = true;
-    typeSelect.appendChild(opt);
-  });
-  typeSelect.onchange = () => { selectedType = typeSelect.value; };
-
-  // Living document toggle — sits beside the type selector
-  const livingBtn = document.createElement('button');
-  livingBtn.type = 'button';
-  livingBtn.className = 'living-doc-toggle';
-  livingBtn.title = 'For things that change — codebase references, product specs, team structures.';
-  const pip = el('span', 'living-doc-pip');
-  livingBtn.appendChild(pip);
-  livingBtn.appendChild(document.createTextNode('Living document'));
-  livingBtn.onclick = () => {
-    selectedLiving = !selectedLiving;
-    livingBtn.classList.toggle('active', selectedLiving);
-  };
-
-  const typeWrap = el('div', 'proposal-value');
-  typeWrap.appendChild(typeSelect);
-  typeWrap.appendChild(livingBtn);
-  grid.appendChild(typeWrap);
+  grid.appendChild(el('div', 'proposal-value', selectedType.charAt(0).toUpperCase() + selectedType.slice(1)));
 
   if (proposal.tags && proposal.tags.length) {
     grid.appendChild(el('div', 'proposal-label', 'Tags'));
@@ -1903,31 +1906,14 @@ function renderProposal(proposal) {
     grid.appendChild(tags);
   }
 
-  // Provenance selector — keep the user's own voice (personal) strictly distinct
-  // from a client's or employer's voice. The classifier proposes; user can correct.
-  const PROV_OPTIONS = [
-    ['personal', 'Me (personal)'],
-    ['employer', 'My company'],
-    ['client',   'Client'],
-    ['external', 'External'],
-  ];
-  let selectedProvenance = PROV_OPTIONS.some(([v]) => v === proposal.provenance)
+  // Read-only source/provenance preview. Personal voice stays distinct from a
+  // client's or employer's voice; the classifier proposes, the user approves.
+  const PROV_LABELS = { personal: 'Me (personal)', employer: 'My company', client: 'Client', external: 'External' };
+  const selectedProvenance = PROV_LABELS[proposal.provenance]
     ? proposal.provenance
     : (proposal.provenance === 'organisational' ? 'employer' : 'personal');
   grid.appendChild(el('div', 'proposal-label', 'Source'));
-  const provSelect = document.createElement('select');
-  provSelect.className = 'proposal-select';
-  PROV_OPTIONS.forEach(([value, label]) => {
-    const opt = document.createElement('option');
-    opt.value = value;
-    opt.textContent = label;
-    if (value === selectedProvenance) opt.selected = true;
-    provSelect.appendChild(opt);
-  });
-  provSelect.onchange = () => { selectedProvenance = provSelect.value; };
-  const provWrap = el('div', 'proposal-value');
-  provWrap.appendChild(provSelect);
-  grid.appendChild(provWrap);
+  grid.appendChild(el('div', 'proposal-value', PROV_LABELS[selectedProvenance]));
 
   grid.appendChild(el('div', 'proposal-label', 'Content'));
   const content = el('div', 'proposal-value');
@@ -2205,9 +2191,14 @@ $inputForm.addEventListener('submit', async (e) => {
   }
 
   const text = $inputText.value.trim();
-  if (!text || $sendBtn.disabled) return;
+  if ((!text && !state.pendingImage) || $sendBtn.disabled) return;
 
-  renderUser(text);
+  // Snapshot and clear the pending image so it rides exactly one turn (7A).
+  const pendingImage = state.pendingImage;
+  state.pendingImage = null;
+  renderPendingImageChip();
+
+  renderUser(text, pendingImage ? pendingImage.dataUrl : null);
   $inputText.value = '';
   autosizeTextarea();
 
@@ -2233,6 +2224,7 @@ $inputForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({
         text,
         history: state.history.slice(-12),
+        ...(pendingImage ? { image: { media_type: pendingImage.media_type, data: pendingImage.data } } : {}),
         ...(state.selectedConceptIds.size > 0
           ? { context_concept_ids: [...state.selectedConceptIds] }
           : {}),
@@ -2253,24 +2245,35 @@ $inputForm.addEventListener('submit', async (e) => {
         if (data.kind === 'store-proposal') {
           loading.remove();
           renderProposal(data.proposal);
-          // Not added to chat history
+          // RC1 fix (sub-phase 3): keep the proposal reachable for follow-up
+          // turns ("make it a skill instead"). The user's message carries the
+          // substance; the marker records that a proposal is open, awaiting a
+          // Store / Not now decision.
+          state.history.push({ role: 'user', content: text });
+          state.history.push({ role: 'assistant', content: `[Store proposal shown: "${data.proposal?.title || 'untitled'}" (${data.proposal?.type || 'knowledge'}). Awaiting the user's Store or Not now decision.]` });
         } else if (data.kind === 'ambiguous') {
           loading.remove();
           renderTwin(data.text || 'Want me to remember this, or are we just chatting?');
           state.history.push({ role: 'user', content: text });
           state.history.push({ role: 'assistant', content: data.text || '' });
         } else if (data.kind === 'chat') {
-          // Set up the in-progress twin bubble; tokens will fill it.
-          loading.remove();
-          twinBody = renderTwin('', data.citations);
+          // RC5 fix (sub-phase 7C): keep the contained loading indicator on
+          // screen until the FIRST token arrives. Previously we removed it here
+          // and showed an empty bubble holding only a bare blinking cursor,
+          // which looked broken in the gap before tokens streamed (symptom 10).
           metaCitations   = data.citations;
           metaSkillGap    = data.skill_gap;
           metaDriftPrompt = data.drift_prompt || null;
           metaSkillNudge  = data.skill_nudge  || null;
-          // Add streaming cursor
-          twinBody.innerHTML = '<span class="streaming-cursor"></span>';
+          twinBody = null; // created lazily on the first token
         }
-      } else if (event === 'token' && twinBody) {
+      } else if (event === 'token') {
+        // Lazily create the twin bubble on the first token, swapping out the
+        // contained loading indicator only now (sub-phase 7C).
+        if (!twinBody) {
+          loading.remove();
+          twinBody = renderTwin('', metaCitations);
+        }
         accumulated += data.text || '';
         // Re-render markdown on every chunk. marked is fast enough for this.
         twinBody.innerHTML = renderCitations(accumulated, metaCitations)
@@ -2292,6 +2295,10 @@ $inputForm.addEventListener('submit', async (e) => {
           twinBody.innerHTML = renderCitations(accumulated, metaCitations, true);
           state.history.push({ role: 'user', content: text });
           state.history.push({ role: 'assistant', content: accumulated });
+        } else {
+          // No tokens arrived (e.g. an empty chat response): clear the loading
+          // indicator so it does not spin forever (sub-phase 7C edge case).
+          loading.remove();
         }
         // Show drift prompt once per session, after the first response that has one.
         if (metaDriftPrompt && !sessionStorage.getItem('drift_prompt_shown')) {
@@ -2443,39 +2450,98 @@ async function submitAddPaste() {
 $addPasteGo.addEventListener('click', submitAddPaste);
 
 // ── Document upload ────────────────────────────────────────────────────────
-$uploadFile.addEventListener('change', async () => {
-  const file = $uploadFile.files?.[0];
-  $uploadFile.value = '';
-  if (!file) return;
+// ── File upload helpers (sub-phase 7A) ──────────────────────────────────────
+// Images attach to the next chat turn as a vision input. PDFs/DOCX are parsed
+// to text in the browser (pdf.js / mammoth, lazy-loaded from CDN) and routed
+// through the same propose-confirm-store flow as typed documents, so no server
+// dependency is added to the core path.
+const _loadedScripts = {};
+function loadScriptOnce(src) {
+  if (_loadedScripts[src]) return _loadedScripts[src];
+  _loadedScripts[src] = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Could not load a helper library. Check your connection.'));
+    document.head.appendChild(s);
+  });
+  return _loadedScripts[src];
+}
 
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  if (ext === 'pdf') {
-    renderSystem(
-      `PDF text extraction is coming. For now, please copy the PDF text and paste it into the box, or upload as <strong>.txt</strong> / <strong>.md</strong>.`
-    );
-    return;
+async function extractPdfText(file) {
+  await loadScriptOnce('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+  const pdfjsLib = window.pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  const data = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const maxPages = Math.min(pdf.numPages, 50);
+  let out = '';
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    out += content.items.map(it => it.str).join(' ') + '\n\n';
   }
-  if (ext !== 'txt' && ext !== 'md') {
-    renderSystem('Unsupported file type. Upload <strong>.txt</strong> or <strong>.md</strong>.');
-    return;
-  }
-  if (file.size > 500 * 1024) {
-    renderSystem('That file is over 500KB. Please trim it down.');
-    return;
-  }
+  return out.trim();
+}
 
-  // Show the upload as a user-side bubble — they "sent" a file to the twin.
+async function extractDocxText(file) {
+  await loadScriptOnce('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
+  const data = await file.arrayBuffer();
+  const result = await window.mammoth.extractRawText({ arrayBuffer: data });
+  return ((result && result.value) || '').trim();
+}
+
+// Read an image to raw base64 (no data: prefix) plus a dataURL for the preview.
+function readImageBase64(file) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const dataUrl = String(fr.result || '');
+      const comma = dataUrl.indexOf(',');
+      resolve({ media_type: file.type, data: dataUrl.slice(comma + 1), dataUrl });
+    };
+    fr.onerror = () => reject(new Error('Could not read the image.'));
+    fr.readAsDataURL(file);
+  });
+}
+
+// Small preview bar above the input showing the attached image, with a remove.
+function renderPendingImageChip() {
+  let chip = document.getElementById('pending-image-chip');
+  if (!state.pendingImage) { if (chip) chip.remove(); return; }
+  if (!chip) {
+    chip = el('div', 'pending-image-chip');
+    chip.id = 'pending-image-chip';
+    $inputForm.parentNode.insertBefore(chip, $inputForm);
+  }
+  chip.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = state.pendingImage.dataUrl;
+  img.alt = 'attached image';
+  img.className = 'pending-image-thumb';
+  const label = el('span', 'pending-image-label', 'Image attached. Add a question or just send.');
+  const rm = el('button', 'pending-image-remove', '×');
+  rm.type = 'button';
+  rm.title = 'Remove image';
+  rm.onclick = () => { state.pendingImage = null; renderPendingImageChip(); };
+  chip.appendChild(img);
+  chip.appendChild(label);
+  chip.appendChild(rm);
+}
+
+// Send extracted document text through the existing propose-confirm-store flow.
+async function proposeFromText(filename, content) {
+  if (!content || !content.trim()) {
+    renderSystem('That file looks empty, nothing to read.');
+    return;
+  }
   if (state.activeTab !== 'chat') switchTab('chat');
-  renderUser('[uploaded ' + file.name + ']');
+  renderUser('[uploaded ' + filename + ']');
   const loading = renderLoading();
   try {
-    const content = await file.text();
-    // Step 1: PROPOSE — Haiku-generated record preview, no storage yet.
-    // Per spec §3.2 and the chat-behaviour brief: file uploads must go
-    // through the same propose-confirm-store flow as typed content.
     const propose = await api('/api/twin/document-propose', {
       method: 'POST',
-      body: JSON.stringify({ filename: file.name, content }),
+      body: JSON.stringify({ filename, content }),
     });
     loading.remove();
     renderDocumentProposal(propose.proposal);
@@ -2486,6 +2552,66 @@ $uploadFile.addEventListener('change', async () => {
     } else {
       renderSystem('Upload did not go through. ' + escapeHtml(err.message) + '. Try the file again.');
     }
+  }
+}
+
+$uploadFile.addEventListener('change', async () => {
+  const file = $uploadFile.files?.[0];
+  $uploadFile.value = '';
+  if (!file) return;
+
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const isImage = (file.type || '').startsWith('image/');
+
+  // ── Image → attach to the next chat turn as a vision input ──
+  if (isImage) {
+    if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
+      renderSystem('Unsupported image type. Use PNG, JPEG, GIF or WEBP.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      renderSystem('That image is over 4MB. Please use a smaller one.');
+      return;
+    }
+    try {
+      if (state.activeTab !== 'chat') switchTab('chat');
+      state.pendingImage = await readImageBase64(file);
+      renderPendingImageChip();
+      $inputText.focus();
+    } catch (err) {
+      renderSystem('Could not read that image. Try another.');
+    }
+    return;
+  }
+
+  // ── Documents → extract text in-browser, then the propose-confirm flow ──
+  if (file.size > 10 * 1024 * 1024) {
+    renderSystem('That file is over 10MB. Please trim it down.');
+    return;
+  }
+  try {
+    if (ext === 'pdf') {
+      if (state.activeTab !== 'chat') switchTab('chat');
+      const loading = renderLoading();
+      let content;
+      try { content = await extractPdfText(file); }
+      finally { loading.remove(); }
+      await proposeFromText(file.name, content);
+    } else if (ext === 'docx') {
+      if (state.activeTab !== 'chat') switchTab('chat');
+      const loading = renderLoading();
+      let content;
+      try { content = await extractDocxText(file); }
+      finally { loading.remove(); }
+      await proposeFromText(file.name, content);
+    } else if (ext === 'txt' || ext === 'md') {
+      const content = await file.text();
+      await proposeFromText(file.name, content);
+    } else {
+      renderSystem('Unsupported file type. Upload an image, or a .txt, .md, .pdf or .docx file.');
+    }
+  } catch (err) {
+    renderSystem('Could not read that file. ' + escapeHtml(err.message || '') + ' Try another.');
   }
 });
 
